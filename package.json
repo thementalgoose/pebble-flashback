@@ -1,0 +1,32 @@
+{
+  "name": "pebble-flashback",
+  "author": "Jordan Fisher",
+  "version": "1.0.0",
+  "keywords": ["pebble-app"],
+  "private": true,
+  "dependencies": {},
+  "pebble": {
+    "displayName": "Flashback",
+    "uuid": "6d1b717e-1f10-4da6-94c1-3347d6bec79f",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk",
+      "diorite",
+      "emery",
+      "flint"
+    ],
+    "watchapp": {
+      "watchface": false
+    },
+    "messageKeys": [
+      "Calendar",
+      "Error"
+    ],
+    "resources": {
+      "media": []
+    }
+  }
+}
