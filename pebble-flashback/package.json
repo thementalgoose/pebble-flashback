@@ -1,13 +1,13 @@
 {
-  "name": "myfirstproject",
-  "author": "MakeAwesomeHappen",
+  "name": "pebble-flashback",
+  "author": "Jordan Fisher",
   "version": "1.0.0",
   "keywords": ["pebble-app"],
   "private": true,
   "dependencies": {},
   "pebble": {
-    "displayName": "myfirstproject",
-    "uuid": "00000000-0000-0000-0000-000000000001",
+    "displayName": "Flashback",
+    "uuid": "6d1b717e-1f10-4da6-94c1-3347d6bec79f",
     "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": [
@@ -15,13 +15,15 @@
       "basalt",
       "chalk",
       "diorite",
-      "emery"
+      "emery",
+      "flint"
     ],
     "watchapp": {
       "watchface": false
     },
     "messageKeys": [
-      "dummy"
+      "Calendar",
+      "Error"
     ],
     "resources": {
       "media": []
