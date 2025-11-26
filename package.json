@@ -22,8 +22,11 @@
       "watchface": false
     },
     "messageKeys": [
-      "Calendar",
-      "Error"
+      "KEY_RACE_COUNT",
+      "KEY_RACE_NAME",
+      "KEY_RACE_LOCATION", 
+      "KEY_RACE_DATE",
+      "KEY_RACE_INDEX"
     ],
     "resources": {
       "media": []

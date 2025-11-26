@@ -1,76 +1,87 @@
-this._xhrWrapper = function(url, type, callback) {
-    var xhr = new XMLHttpRequest();
-    xhr.onload = function () {
-        callback(xhr);
-    };
-    xhr.open(type, url);
-    xhr.send();
-};
+var F1_API_URL = 'https://flashback.pages.dev/overview/2025.json';
 
-this.sendToPebble = function(season, overviewJson) { 
-    if (!overviewJson.data || Object.keys(overviewJson.data).length == 0) { 
-        Pebble.sendAppMessage({
-            "Error": "Season data not available"
-        })
-    }
-    let today = (new Date()).toISOString().split('T')[0];
-    let upcomingEvents = [];
-    let previousEvents = [];
-    for (let key of Object.keys(overviewJson.data)) { 
-        let model = overviewJson.data[key];
-        let schedule;
-        if (model.schedule == null || model.schedule.length == 0) { 
-            schedule = [];
-        } else {
-            schedule = model.schedule.map(x => {
-                return { 
-                    "date": x.date,
-                    "time": x.time,
-                    "label": x.label
-                }
-            })
-        }
-
-        if (model.date >= today) { 
-            upcomingEvents.push({
-                "season": model.season,
-                "round": model.round,
-                "name": model.name,
-                "circuit": model.circuit.name,
-                "country": model.circuit.country,
-                "date": model.date,
-                "time": model.time,
-                "events": schedule
-            })
-        } else { 
-            previousEvents.push({
-                "season": model.season,
-                "round": model.round,
-                "name": model.name,
-                "circuit": model.circuit.name,
-                "country": model.circuit.country,
-                "date": model.date,
-                "time": model.time,
-                "events": schedule
-            })
-        }
-    }
-
-    Pebble.sendAppMessage({
-        "Calendar": {
-            "Season": season,
-            "UpcomingEvents": upcomingEvents,
-            "PreviousEvents": previousEvents
-        }
-    })
+// Helper to format date
+function formatDate(dateStr) {
+  var date = new Date(dateStr);
+  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return months[date.getMonth()] + ' ' + date.getDate();
 }
 
+// Fetch F1 calendar data
+function fetchF1Calendar() {
+  console.log('Fetching F1 calendar...');
+  
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', F1_API_URL, true);
+  xhr.onload = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      try {
+        var response = JSON.parse(xhr.responseText);
+        var data = response.data;
+        var races = [];
+        
+        // Extract race data
+        for (var key in data) {
+          if (data.hasOwnProperty(key)) {
+            var race = data[key];
+            races.push({
+              name: race.name,
+              location: race.circuit.city,
+              date: formatDate(race.date),
+              round: race.round
+            });
+          }
+        }
+        
+        // Sort by round
+        races.sort(function(a, b) { return a.round - b.round; });
+        
+        console.log('Fetched ' + races.length + ' races');
+        sendRacesToWatch(races);
+        
+      } catch (e) {
+        console.error('Error parsing F1 data: ' + e.message);
+      }
+    } else {
+      console.error('Request failed: ' + xhr.status);
+    }
+  };
+  xhr.send();
+}
 
-Pebble.addEventListener("ready", function(e) {
-    console.log("Hello world! - Sent from your javascript application.");
+// Send race data to watch
+function sendRacesToWatch(races) {
+  // First send the count using numeric key
+  Pebble.sendAppMessage({
+    0: races.length
+  });
+  
+  // Then send each race using numeric keys
+  races.forEach(function(race, index) {
+    setTimeout(function() {
+      Pebble.sendAppMessage({
+        4: index,           // KEY_RACE_INDEX
+        1: race.name,       // KEY_RACE_NAME
+        2: race.location,   // KEY_RACE_LOCATION
+        3: race.date        // KEY_RACE_DATE
+      }, function() {
+        console.log('Sent race ' + index + ': ' + race.name);
+      }, function(e) {
+        console.error('Failed to send race ' + index + ': ' + e.error.message);
+      });
+    }, index * 100); // Delay to avoid overwhelming the watch
+  });
+}
+
+// Listen for when the watchapp is opened
+Pebble.addEventListener('ready', function() {
+  console.log('PebbleKit JS ready!');
+  fetchF1Calendar();
 });
 
-Pebble.addEventListener("appmessage", function(dict) {
-    console.log("App Message");
-    console.log('Got message: ' + JSON.stringify(dict));
+// Listen for messages from watch
+Pebble.addEventListener('appmessage', function(e) {
+  console.log('Received message from watch, fetching data...');
+  fetchF1Calendar();
 });
