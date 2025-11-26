@@ -1,7 +1,9 @@
 #include <pebble.h>
 
 #include "modules/data.h"
+#include "modules/constants.h"
 #include "window/main-menu.h"
+#include "window/calendar.h"
 
 static void js_ready_callback() {
   main_window_set_background_color(COLOR_FALLBACK(GColorGreen, GColorWhite));
