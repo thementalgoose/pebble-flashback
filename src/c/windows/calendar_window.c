@@ -9,7 +9,6 @@
 
 static Window *s_window;
 static MenuLayer *s_menu_layer;
-static StatusBarLayer *s_status_bar;
 static char s_header_text[16];
 
 // Race data storage
@@ -102,30 +101,35 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     return;
   }
 
-  // Find the race for this row
-  int upcoming_index = 0;
-  int previous_index = 0;
   Race *race = NULL;
 
-  for (int i = 0; i < s_race_count; i++) {
-    int comparison = utils_compare_date_with_now(s_races[i].date);
-
-    if (comparison >= 0) {
-      // Upcoming race
-      if (cell_index->section == SECTION_UPCOMING &&
-          upcoming_index == cell_index->row) {
-        race = &s_races[i];
-        break;
+  if (cell_index->section == SECTION_UPCOMING) {
+    // For upcoming races, iterate backwards to show chronologically (soonest first)
+    // Since races arrive in reverse order, iterating backwards gives us chronological order
+    int upcoming_index = 0;
+    for (int i = s_race_count - 1; i >= 0; i--) {
+      int comparison = utils_compare_date_with_now(s_races[i].date);
+      if (comparison >= 0) {
+        if (upcoming_index == cell_index->row) {
+          race = &s_races[i];
+          break;
+        }
+        upcoming_index++;
       }
-      upcoming_index++;
-    } else {
-      // Previous race
-      if (cell_index->section == SECTION_PREVIOUS &&
-          previous_index == cell_index->row) {
-        race = &s_races[i];
-        break;
+    }
+  } else {
+    // For previous races, iterate forwards to show reverse chronologically (most recent first)
+    // Since races arrive in reverse order, iterating forwards gives us reverse chronological order
+    int previous_index = 0;
+    for (int i = 0; i < s_race_count; i++) {
+      int comparison = utils_compare_date_with_now(s_races[i].date);
+      if (comparison < 0) {
+        if (previous_index == cell_index->row) {
+          race = &s_races[i];
+          break;
+        }
+        previous_index++;
       }
-      previous_index++;
     }
   }
 
@@ -147,30 +151,39 @@ static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
     return;
   }
 
-  // Find the race for this row
-  int upcoming_index = 0;
-  int previous_index = 0;
+  int selected_index = -1;
 
-  for (int i = 0; i < s_race_count; i++) {
-    int comparison = utils_compare_date_with_now(s_races[i].date);
-
-    if (comparison >= 0) {
-      if (cell_index->section == SECTION_UPCOMING &&
-          upcoming_index == cell_index->row) {
-        APP_LOG(APP_LOG_LEVEL_INFO, "Selected race index: %d", i);
-        race_window_push(i);
-        return;
+  if (cell_index->section == SECTION_UPCOMING) {
+    // For upcoming races, iterate backwards to match display order (chronological)
+    int upcoming_index = 0;
+    for (int i = s_race_count - 1; i >= 0; i--) {
+      int comparison = utils_compare_date_with_now(s_races[i].date);
+      if (comparison >= 0) {
+        if (upcoming_index == cell_index->row) {
+          selected_index = i;
+          break;
+        }
+        upcoming_index++;
       }
-      upcoming_index++;
-    } else {
-      if (cell_index->section == SECTION_PREVIOUS &&
-          previous_index == cell_index->row) {
-        APP_LOG(APP_LOG_LEVEL_INFO, "Selected race index: %d", i);
-        race_window_push(i);
-        return;
-      }
-      previous_index++;
     }
+  } else {
+    // For previous races, iterate forwards to match display order (reverse chronological)
+    int previous_index = 0;
+    for (int i = 0; i < s_race_count; i++) {
+      int comparison = utils_compare_date_with_now(s_races[i].date);
+      if (comparison < 0) {
+        if (previous_index == cell_index->row) {
+          selected_index = i;
+          break;
+        }
+        previous_index++;
+      }
+    }
+  }
+
+  if (selected_index >= 0) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Selected race index: %d", selected_index);
+    race_window_push(selected_index, s_races[selected_index].name);
   }
 }
 
@@ -179,17 +192,8 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  // Create status bar
-  s_status_bar = status_bar_layer_create();
-  layer_add_child(window_layer, status_bar_layer_get_layer(s_status_bar));
-
-  // Calculate menu layer bounds
-  GRect menu_bounds = bounds;
-  menu_bounds.origin.y = STATUS_BAR_LAYER_HEIGHT;
-  menu_bounds.size.h -= STATUS_BAR_LAYER_HEIGHT;
-
-  // Create menu layer
-  s_menu_layer = menu_layer_create(menu_bounds);
+  // Create menu layer (full screen, no status bar)
+  s_menu_layer = menu_layer_create(bounds);
   menu_layer_set_click_config_onto_window(s_menu_layer, window);
 
   // Set callbacks
@@ -216,7 +220,6 @@ static void window_load(Window *window) {
 
 static void window_unload(Window *window) {
   menu_layer_destroy(s_menu_layer);
-  status_bar_layer_destroy(s_status_bar);
 }
 
 static void window_appear(Window *window) {

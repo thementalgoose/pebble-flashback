@@ -8,8 +8,12 @@ int g_current_season = 2025;
 
 static Window *s_window;
 static MenuLayer *s_menu_layer;
-static StatusBarLayer *s_status_bar;
 static char s_season_text[16];
+
+// Menu icons
+static GBitmap *s_icon_calendar;
+static GBitmap *s_icon_helmet;
+static GBitmap *s_icon_trophy;
 
 // Menu items
 #define MENU_ITEM_CALENDAR 0
@@ -83,17 +87,8 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  // Create status bar
-  s_status_bar = status_bar_layer_create();
-  layer_add_child(window_layer, status_bar_layer_get_layer(s_status_bar));
-
-  // Calculate menu layer bounds (below status bar)
-  GRect menu_bounds = bounds;
-  menu_bounds.origin.y = STATUS_BAR_LAYER_HEIGHT;
-  menu_bounds.size.h -= STATUS_BAR_LAYER_HEIGHT;
-
-  // Create menu layer
-  s_menu_layer = menu_layer_create(menu_bounds);
+  // Create menu layer (full screen, no status bar)
+  s_menu_layer = menu_layer_create(bounds);
   menu_layer_set_click_config_onto_window(s_menu_layer, window);
 
   // Set callbacks
@@ -116,7 +111,6 @@ static void window_load(Window *window) {
 
 static void window_unload(Window *window) {
   menu_layer_destroy(s_menu_layer);
-  status_bar_layer_destroy(s_status_bar);
 }
 
 void home_window_push(void) {

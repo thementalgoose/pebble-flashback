@@ -8,13 +8,13 @@
 
 static Window *s_window;
 static MenuLayer *s_menu_layer;
-static StatusBarLayer *s_status_bar;
 
 // Event data storage
 static RaceEvent s_events[MAX_EVENTS];
 static int s_event_count = 0;
 static bool s_data_loaded = false;
 static int s_current_race_index = -1;
+static char s_race_name[64] = "Race Schedule";
 
 // Callbacks from message handler
 static void on_event_data_received(int index, const char *title,
@@ -80,7 +80,7 @@ static int16_t get_cell_height_callback(struct MenuLayer *menu_layer,
 
 static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
                                  uint16_t section_index, void *context) {
-  menu_cell_basic_header_draw(ctx, cell_layer, "Race Schedule");
+  menu_cell_basic_header_draw(ctx, cell_layer, s_race_name);
 }
 
 static int16_t get_header_height_callback(struct MenuLayer *menu_layer,
@@ -99,17 +99,8 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  // Create status bar
-  s_status_bar = status_bar_layer_create();
-  layer_add_child(window_layer, status_bar_layer_get_layer(s_status_bar));
-
-  // Calculate menu layer bounds
-  GRect menu_bounds = bounds;
-  menu_bounds.origin.y = STATUS_BAR_LAYER_HEIGHT;
-  menu_bounds.size.h -= STATUS_BAR_LAYER_HEIGHT;
-
-  // Create menu layer
-  s_menu_layer = menu_layer_create(menu_bounds);
+  // Create menu layer (full screen, no status bar)
+  s_menu_layer = menu_layer_create(bounds);
   menu_layer_set_click_config_onto_window(s_menu_layer, window);
 
   // Set callbacks
@@ -135,13 +126,19 @@ static void window_load(Window *window) {
 
 static void window_unload(Window *window) {
   menu_layer_destroy(s_menu_layer);
-  status_bar_layer_destroy(s_status_bar);
 }
 
-void race_window_push(int race_index) {
+void race_window_push(int race_index, const char *race_name) {
   s_current_race_index = race_index;
   s_data_loaded = false;
   s_event_count = 0;
+
+  // Store race name for header display
+  if (race_name) {
+    snprintf(s_race_name, sizeof(s_race_name), "%s", race_name);
+  } else {
+    snprintf(s_race_name, sizeof(s_race_name), "Race Schedule");
+  }
 
   if (!s_window) {
     s_window = window_create();

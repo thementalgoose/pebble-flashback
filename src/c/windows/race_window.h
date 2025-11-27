@@ -3,7 +3,7 @@
 #include <pebble.h>
 
 // Create and show the race window for a specific race
-void race_window_push(int race_index);
+void race_window_push(int race_index, const char *race_name);
 
 // Destroy the race window
 void race_window_destroy(void);

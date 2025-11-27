@@ -149,10 +149,11 @@ function sendRacesToWatch(overviewData) {
         return;
     }
 
-    // Convert data object to array and sort by round
-    const races = Object.values(overviewData.data).sort((a, b) => a.round - b.round);
+    // Convert data object to array and sort by round in reverse order
+    // This ensures upcoming races are populated first
+    const races = Object.values(overviewData.data).sort((a, b) => b.round - a.round);
 
-    console.log(`Sending ${races.length} races to watch`);
+    console.log(`Sending ${races.length} races to watch (reverse order)`);
 
     // Send count first
     Pebble.sendAppMessage({
