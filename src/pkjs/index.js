@@ -1,198 +1,304 @@
-var seasons = {};
-var currentSeason = new Date().getFullYear();
+// PebbleKit JS - F1 Flashback Data Layer
+// Handles API fetching, caching, and communication with watch
 
-var REQUEST_TYPE = {
-    CALENDAR: 0,
-    DRIVERS: 1,
-    TEAMS: 2
+const CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
+const BASE_URL = 'https://sand.flashback.pages.dev';
+
+// Import auto-generated message keys
+var messageKeys = require('message_keys');
+
+// Request types (must match C code)
+const REQUEST_TYPES = {
+    GET_OVERVIEW: 1,
+    GET_RACE_DETAILS: 2,
+    GET_DRIVER_STANDINGS: 3,
+    GET_TEAM_STANDINGS: 4
 };
 
-function fetchSeasonData(season, callback) {
-    if (seasons[season]) {
-        callback(seasons[season]);
+// Cache management
+function getCacheKey(type, season) {
+    return `f1_${type}_${season}`;
+}
+
+function getCachedData(type, season) {
+    const key = getCacheKey(type, season);
+    const cached = localStorage.getItem(key);
+
+    if (!cached) {
+        return null;
+    }
+
+    try {
+        const data = JSON.parse(cached);
+        const now = Date.now();
+
+        // Check if cache is expired
+        if (data.timestamp && (now - data.timestamp) < CACHE_DURATION) {
+            console.log(`Cache hit for ${key}`);
+            return data.content;
+        } else {
+            console.log(`Cache expired for ${key}`);
+            localStorage.removeItem(key);
+            return null;
+        }
+    } catch (e) {
+        console.error('Error reading cache:', e);
+        localStorage.removeItem(key);
+        return null;
+    }
+}
+
+function setCachedData(type, season, content) {
+    const key = getCacheKey(type, season);
+    const data = {
+        timestamp: Date.now(),
+        content: content
+    };
+
+    try {
+        localStorage.setItem(key, JSON.stringify(data));
+        console.log(`Cached data for ${key}`);
+    } catch (e) {
+        console.error('Error writing cache:', e);
+    }
+}
+
+// Fetch data from API
+function fetchOverview(season) {
+    return new Promise((resolve, reject) => {
+        // Check cache first
+        const cached = getCachedData('overview', season);
+        if (cached) {
+            resolve(cached);
+            return;
+        }
+
+        // Fetch from API using XMLHttpRequest (PebbleKit JS doesn't support fetch)
+        const url = `${BASE_URL}/overview/${season}.json`;
+        console.log(`Fetching overview from ${url}`);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    console.log('Overview data received');
+                    setCachedData('overview', season, data);
+                    resolve(data);
+                } catch (e) {
+                    console.error('Error parsing JSON:', e);
+                    reject(e);
+                }
+            } else {
+                console.error('HTTP error:', xhr.status);
+                reject(new Error('HTTP ' + xhr.status));
+            }
+        };
+        xhr.onerror = function() {
+            console.error('Network error');
+            reject(new Error('Network error'));
+        };
+        xhr.send();
+    });
+}
+
+function fetchStandings(season) {
+    return new Promise((resolve, reject) => {
+        // Check cache first
+        const cached = getCachedData('standings', season);
+        if (cached) {
+            resolve(cached);
+            return;
+        }
+
+        // Fetch from API using XMLHttpRequest (PebbleKit JS doesn't support fetch)
+        const url = `${BASE_URL}/standings/${season}.json`;
+        console.log(`Fetching standings from ${url}`);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    console.log('Standings data received');
+                    setCachedData('standings', season, data);
+                    resolve(data);
+                } catch (e) {
+                    console.error('Error parsing JSON:', e);
+                    reject(e);
+                }
+            } else {
+                console.error('HTTP error:', xhr.status);
+                reject(new Error('HTTP ' + xhr.status));
+            }
+        };
+        xhr.onerror = function() {
+            console.error('Network error');
+            reject(new Error('Network error'));
+        };
+        xhr.send();
+    });
+}
+
+// Process overview data and send races to watch
+function sendRacesToWatch(overviewData) {
+    if (!overviewData || !overviewData.data) {
+        console.error('Invalid overview data');
         return;
     }
 
-    var overviewUrl = 'https://sand.flashback.pages.dev/overview/' + season + '.json';
-    var standingsUrl = 'https://sand.flashback.pages.dev/standings/' + season + '.json';
+    // Convert data object to array and sort by round
+    const races = Object.values(overviewData.data).sort((a, b) => a.round - b.round);
 
-    Promise.all([
-        fetch(overviewUrl).then(function (response) { return response.json(); }),
-        fetch(standingsUrl).then(function (response) { return response.json(); })
-    ]).then(function (values) {
-        var overview = values[0];
-        var standings = values[1];
+    console.log(`Sending ${races.length} races to watch`);
 
-        seasons[season] = {
-            overview: overview,
-            standings: standings
+    // Send count first
+    Pebble.sendAppMessage({
+        [messageKeys.REQUEST_TYPE]: REQUEST_TYPES.GET_OVERVIEW,
+        [messageKeys.DATA_COUNT]: races.length
+    }, function () {
+        console.log('Sent race count');
+    }, function (e) {
+        console.error('Failed to send race count:', e);
+    });
+
+    // Send each race
+    races.forEach((race, index) => {
+        const message = {
+            [messageKeys.REQUEST_TYPE]: REQUEST_TYPES.GET_OVERVIEW,
+            [messageKeys.DATA_INDEX]: index,
+            [messageKeys.DATA_TITLE]: race.name,
+            [messageKeys.DATA_SUBTITLE]: race.circuit.city + ', ' + race.circuit.country,
+            [messageKeys.DATA_EXTRA]: race.date // Race date for sorting
         };
 
-        console.log('Fetched data for season ' + season);
-        callback(seasons[season]);
-    }).catch(function (err) {
-        console.log('Error fetching data: ' + err);
+        // Add small delay between messages to avoid overwhelming the watch
+        setTimeout(() => {
+            Pebble.sendAppMessage(message,
+                function () {
+                    console.log(`Sent race ${index}: ${race.name}`);
+                },
+                function (e) {
+                    console.error(`Failed to send race ${index}:`, e);
+                }
+            );
+        }, index * 100);
     });
 }
 
-function sendAppMessage(dict) {
-    Pebble.sendAppMessage(dict, function () {
-        console.log('Message sent successfully: ' + JSON.stringify(dict));
-    }, function (e) {
-        console.log('Message failed: ' + JSON.stringify(e));
-    });
-}
-
-function sendList(data, type) {
-    // Send count first
-    var countDict = {};
-    countDict[10000] = type; // REQUEST_TYPE
-    countDict[10002] = data.length; // DATA_COUNT
-
-    console.log('Sending count dict: ' + JSON.stringify(countDict));
-    Pebble.sendAppMessage(countDict, function () {
-        console.log('Count sent successfully');
-        // Send items one by one
-        sendNextItem(data, type, 0);
-    }, function (e) {
-        console.log('Failed to send count: ' + JSON.stringify(e));
-    });
-}
-
-function sendNextItem(data, type, index) {
-    if (index >= data.length) {
-        console.log('Finished sending list');
+// Process race details and send events to watch
+function sendRaceDetailsToWatch(overviewData, raceIndex) {
+    if (!overviewData || !overviewData.data) {
+        console.error('Invalid overview data');
         return;
     }
 
-    var item = data[index];
-    var dict = {};
-    dict[10000] = type; // REQUEST_TYPE
-    dict[10001] = index; // DATA_INDEX
-    dict[10003] = item.title; // DATA_TITLE
-    dict[10004] = item.subtitle; // DATA_SUBTITLE
-    dict[10005] = item.extra; // DATA_EXTRA
+    const races = Object.values(overviewData.data).sort((a, b) => a.round - b.round);
 
-    Pebble.sendAppMessage(dict, function () {
-        sendNextItem(data, type, index + 1);
+    if (raceIndex < 0 || raceIndex >= races.length) {
+        console.error('Invalid race index:', raceIndex);
+        return;
+    }
+
+    const race = races[raceIndex];
+    const events = race.schedule || [];
+
+    console.log(`Sending ${events.length} events for ${race.name}`);
+
+    // Send count first
+    Pebble.sendAppMessage({
+        [messageKeys.REQUEST_TYPE]: REQUEST_TYPES.GET_RACE_DETAILS,
+        [messageKeys.DATA_COUNT]: events.length
+    }, function () {
+        console.log('Sent event count');
     }, function (e) {
-        console.log('Failed to send item ' + index + ': ' + JSON.stringify(e));
+        console.error('Failed to send event count:', e);
+    });
+
+    // Send each event
+    events.forEach((event, index) => {
+        // Combine date and time into ISO format
+        const dateTimeStr = event.date + 'T' + event.time;
+
+        const message = {
+            [messageKeys.REQUEST_TYPE]: REQUEST_TYPES.GET_RACE_DETAILS,
+            [messageKeys.DATA_INDEX]: index,
+            [messageKeys.DATA_TITLE]: event.label,
+            [messageKeys.DATA_SUBTITLE]: dateTimeStr, // Will be parsed and formatted on watch
+            [messageKeys.DATA_EXTRA]: '' // Reserved for future use
+        };
+
+        // Add small delay between messages
+        setTimeout(() => {
+            Pebble.sendAppMessage(message,
+                function () {
+                    console.log(`Sent event ${index}: ${event.label}`);
+                },
+                function (e) {
+                    console.error(`Failed to send event ${index}:`, e);
+                }
+            );
+        }, index * 100);
     });
 }
 
+// Current season helper
+function getCurrentSeason() {
+    return new Date().getFullYear();
+}
+
+// Listen for messages from watch
+Pebble.addEventListener('appmessage', function (e) {
+    console.log('Received message from watch');
+    const payload = e.payload;
+    const requestType = payload[messageKeys.REQUEST_TYPE];
+    const season = getCurrentSeason();
+
+    switch (requestType) {
+        case REQUEST_TYPES.GET_OVERVIEW:
+            console.log('Request: GET_OVERVIEW');
+            fetchOverview(season)
+                .then(data => sendRacesToWatch(data))
+                .catch(error => console.error('Failed to get overview:', error));
+            break;
+
+        case REQUEST_TYPES.GET_RACE_DETAILS:
+            console.log('Request: GET_RACE_DETAILS');
+            const raceIndex = payload[messageKeys.DATA_INDEX];
+            fetchOverview(season)
+                .then(data => sendRaceDetailsToWatch(data, raceIndex))
+                .catch(error => console.error('Failed to get race details:', error));
+            break;
+
+        case REQUEST_TYPES.GET_DRIVER_STANDINGS:
+            console.log('Request: GET_DRIVER_STANDINGS (not implemented)');
+            // TODO: Implement driver standings
+            break;
+
+        case REQUEST_TYPES.GET_TEAM_STANDINGS:
+            console.log('Request: GET_TEAM_STANDINGS (not implemented)');
+            // TODO: Implement team standings
+            break;
+
+        default:
+            console.log('Unknown request type:', requestType);
+    }
+});
+
+// App lifecycle
 Pebble.addEventListener('ready', function () {
     console.log('PebbleKit JS ready!');
-    console.log('Registering appmessage listener...');
-    fetchSeasonData(currentSeason, function () {
-        console.log('Initial data loaded');
-    });
+    console.log('Current season:', getCurrentSeason());
 });
 
-Pebble.addEventListener('appmessage', function (e) {
-    console.log('!!! Received AppMessage event !!!');
-    console.log('Event payload keys: ' + JSON.stringify(Object.keys(e.payload)));
-    console.log('Full payload: ' + JSON.stringify(e.payload));
-
-    var dict = e.payload;
-    var requestType = dict.REQUEST_TYPE;
-
-    console.log('Request type value: ' + requestType);
-
-    fetchSeasonData(currentSeason, function (data) {
-        console.log('Processing request type: ' + requestType);
-        console.log('Data structure: ' + JSON.stringify(Object.keys(data)));
-
-        if (requestType === REQUEST_TYPE.CALENDAR) {
-            // Process calendar data
-            // API returns object with keys like "s2025r1", "s2025r2" inside data.overview.data
-            console.log('Overview keys: ' + JSON.stringify(Object.keys(data.overview)));
-            var racesObj = data.overview.data;
-            console.log('Races object type: ' + typeof racesObj);
-            console.log('Races keys: ' + (racesObj ? JSON.stringify(Object.keys(racesObj).slice(0, 3)) : 'null'));
-
-            var racesArray = [];
-            for (var key in racesObj) {
-                if (racesObj.hasOwnProperty(key)) {
-                    racesArray.push(racesObj[key]);
-                }
-            }
-            console.log('Found ' + racesArray.length + ' races');
-
-            // Sort by round
-            racesArray.sort(function (a, b) {
-                return a.round - b.round;
-            });
-
-            var races = racesArray.map(function (race) {
-                var details = race.name + '\n' + race.circuit.city + '\n\n';
-                if (race.schedule) {
-                    // Schedule is an array in the new API
-                    race.schedule.forEach(function (session) {
-                        var time = session.date + ' ' + session.time;
-                        details += session.label.toUpperCase() + ':\n' + time.replace('T', ' ').replace('Z', '') + '\n';
-                    });
-                }
-                return {
-                    title: race.name,
-                    subtitle: race.circuit.city + ', ' + race.circuit.country,
-                    extra: details
-                };
-            });
-            console.log('Sending ' + races.length + ' races');
-            sendList(races, REQUEST_TYPE.CALENDAR);
-
-        } else if (requestType === REQUEST_TYPE.DRIVERS) {
-            // Driver standings is an object in data.standings.data.driverStandings
-            var driversObj = data.standings.data.driverStandings;
-            var driversArray = [];
-            for (var dKey in driversObj) {
-                if (driversObj.hasOwnProperty(dKey)) {
-                    var dEntry = driversObj[dKey];
-                    // We need the driver name, which is in data.standings.data.drivers[dKey]
-                    // But the standing entry has driverId which matches the key
-                    var driverInfo = data.standings.data.drivers[dEntry.driverId];
-                    dEntry.name = driverInfo.firstName + ' ' + driverInfo.lastName;
-                    dEntry.code = driverInfo.code;
-                    driversArray.push(dEntry);
-                }
-            }
-            driversArray.sort(function (a, b) {
-                return a.position - b.position;
-            });
-
-            var drivers = driversArray.map(function (driver) {
-                return {
-                    title: driver.position + '. ' + driver.code,
-                    subtitle: driver.points + ' pts',
-                    extra: driver.name
-                };
-            });
-            sendList(drivers, REQUEST_TYPE.DRIVERS);
-
-        } else if (requestType === REQUEST_TYPE.TEAMS) {
-            // Constructor standings is an object in data.standings.data.constructorStandings
-            var teamsObj = data.standings.data.constructorStandings;
-            var teamsArray = [];
-            for (var tKey in teamsObj) {
-                if (teamsObj.hasOwnProperty(tKey)) {
-                    var tEntry = teamsObj[tKey];
-                    var teamInfo = data.standings.data.constructors[tEntry.constructorId];
-                    tEntry.name = teamInfo.name;
-                    teamsArray.push(tEntry);
-                }
-            }
-            teamsArray.sort(function (a, b) {
-                return a.position - b.position;
-            });
-
-            var teams = teamsArray.map(function (team) {
-                return {
-                    title: team.position + '. ' + team.name,
-                    subtitle: team.points + ' pts',
-                    extra: ''
-                };
-            });
-            sendList(teams, REQUEST_TYPE.TEAMS);
-        }
-    });
+Pebble.addEventListener('showConfiguration', function () {
+    console.log('Showing configuration (not implemented)');
 });
+
+Pebble.addEventListener('webviewclosed', function (e) {
+    console.log('Configuration closed');
+});
+
+console.log('F1 Flashback JS loaded');
