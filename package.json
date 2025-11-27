@@ -2,7 +2,9 @@
   "name": "pebble-flashback",
   "author": "Jordan Fisher",
   "version": "1.0.0",
-  "keywords": ["pebble-app"],
+  "keywords": [
+    "pebble-app"
+  ],
   "private": true,
   "dependencies": {},
   "pebble": {
@@ -22,14 +24,31 @@
       "watchface": false
     },
     "messageKeys": [
-      "KEY_RACE_COUNT",
-      "KEY_RACE_NAME",
-      "KEY_RACE_LOCATION", 
-      "KEY_RACE_DATE",
-      "KEY_RACE_INDEX"
+      "REQUEST_TYPE",
+      "DATA_INDEX",
+      "DATA_COUNT",
+      "DATA_TITLE",
+      "DATA_SUBTITLE",
+      "DATA_EXTRA"
     ],
     "resources": {
-      "media": []
+      "media": [
+        {
+          "type": "bitmap",
+          "name": "ICON_CALENDAR",
+          "file": "images/icon_calendar.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "ICON_HELMET",
+          "file": "images/icon_helmet.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "ICON_TROPHY",
+          "file": "images/icon_trophy.png"
+        }
+      ]
     }
   }
 }
