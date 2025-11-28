@@ -1,0 +1,38 @@
+name: Build and Release Pebble App
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Pebble app
+        run: |
+          docker run --rm \
+            -v "${PWD}:/pebble" \
+            pebbledev/pebble-sdk:latest \
+            pebble build
+
+      - name: Get .pbw filename
+        id: pbw
+        run: |
+          PBW_FILE=$(ls build/*.pbw | head -n 1)
+          PBW_NAME=$(basename "$PBW_FILE")
+          echo "file=$PBW_FILE" >> $GITHUB_OUTPUT
+          echo "name=$PBW_NAME" >> $GITHUB_OUTPUT
+
+      - name: Upload .pbw to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ steps.pbw.outputs.file }}
+          asset_name: ${{ steps.pbw.outputs.name }}
+          asset_content_type: application/octet-stream

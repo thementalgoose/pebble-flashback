@@ -1,0 +1,31 @@
+name: Build Pebble App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Pebble app
+        run: |
+          docker run --rm \
+            -v "${PWD}:/pebble" \
+            pebbledev/pebble-sdk:latest \
+            pebble build
+
+      - name: Verify build output
+        run: |
+          if [ -f build/*.pbw ]; then
+            echo "✓ Build successful - .pbw file generated"
+            ls -lh build/*.pbw
+          else
+            echo "✗ Build failed - no .pbw file found"
+            exit 1
+          fi
