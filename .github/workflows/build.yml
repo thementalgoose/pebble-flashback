@@ -17,7 +17,7 @@ jobs:
         run: |
           docker run --rm \
             -v "${PWD}:/pebble" \
-            pebbledev/pebble-sdk:latest \
+            rebble/pebble-sdk \
             pebble build
 
       - name: Verify build output
