@@ -56,15 +56,15 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 
   switch (cell_index->row) {
   case MENU_ITEM_CALENDAR:
-    icon = selected ? s_icon_calendar_light : s_icon_calendar_dark;
+    icon = (selected && SELECTED_ICON_LIGHT) ? s_icon_calendar_light : s_icon_calendar_dark;
     title = "Calendar";
     break;
   case MENU_ITEM_DRIVER_STANDINGS:
-    icon = selected ? s_icon_drivers_light : s_icon_drivers_dark;
+    icon = (selected && SELECTED_ICON_LIGHT) ? s_icon_drivers_light : s_icon_drivers_dark;
     title = "Driver Standings";
     break;
   case MENU_ITEM_TEAM_STANDINGS:
-    icon = selected ? s_icon_teams_light : s_icon_teams_dark;
+    icon = (selected && SELECTED_ICON_LIGHT) ? s_icon_teams_light : s_icon_teams_dark;
     title = "Team Standings";
     break;
   }
