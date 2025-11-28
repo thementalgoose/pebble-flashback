@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="180" src="resources/app_icon.png" />
+  <img width="180" src="appstore/large icon.png" />
 </p>
 
 <h1 align="center">Flashback for Pebble</h1>
@@ -15,10 +15,10 @@ Pebble watch app for the Flashback API 🎉
 
 ### Currently supported
 
-- Calendar view (with races split by Upcoming and Previous)
-- Race schedule view per race
-- (PLANNED) Drivers standings
-- (PLANNED) Teams standings
+- [x] Calendar view (with races split by Upcoming and Previous)
+- [x] Race schedule view per race
+- [x] Drivers standings
+- [x] Teams standings
 
 #### Building
 
