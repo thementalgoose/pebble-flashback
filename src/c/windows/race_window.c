@@ -115,7 +115,7 @@ static void window_load(Window *window) {
 
   // Set custom color highlight on color displays
 #ifdef PBL_COLOR
-  menu_layer_set_highlight_colors(s_menu_layer, GColorFromHEX(0x75b0bf), GColorWhite);
+  menu_layer_set_highlight_colors(s_menu_layer, GColorFromHEX(0x489bb0), GColorWhite);
 #endif
 
   // Set callbacks

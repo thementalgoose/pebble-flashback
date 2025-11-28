@@ -153,7 +153,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     // Draw custom color selection background on color displays
     if (selected) {
 #ifdef PBL_COLOR
-      graphics_context_set_fill_color(ctx, GColorFromHEX(0x75b0bf));
+      graphics_context_set_fill_color(ctx, GColorFromHEX(0x489bb0));
       graphics_fill_rect(ctx, bounds, 0, GCornerNone);
 #endif
     }
@@ -255,7 +255,7 @@ static void window_load(Window *window) {
 
   // Set custom color highlight on color displays
 #ifdef PBL_COLOR
-  menu_layer_set_highlight_colors(s_menu_layer, GColorFromHEX(0x75b0bf), GColorWhite);
+  menu_layer_set_highlight_colors(s_menu_layer, GColorFromHEX(0x489bb0), GColorWhite);
 #endif
 
   // Set callbacks
