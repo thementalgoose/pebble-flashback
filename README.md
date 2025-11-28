@@ -1,6 +1,21 @@
-<p align="center">
-  <img width="180" src="appstore/large icon.png" />
-</p>
+<table align="center">
+  <tr>
+    <th>aplite</th>
+    <th>basalt</th>
+    <th>chalk</th>
+    <th>diorite</th>
+    <th>emery</th>
+    <th>flint</th>
+  </tr>
+  <tr>
+    <td><img src="appstore/aplite/menu.png" width="140" /></td>
+    <td><img src="appstore/basalt/calendar.png" width="140" /></td>
+    <td><img src="appstore/chalk/calendar.png" width="140" /></td>
+    <td><img src="appstore/diorite/race.png" width="140" /></td>
+    <td><img src="appstore/emery/drivers.png" width="140" /></td>
+    <td><img src="appstore/flint/teams.png" width="140" /></td>
+  </tr>
+</table>
 
 <h1 align="center">Flashback for Pebble</h1>
 
