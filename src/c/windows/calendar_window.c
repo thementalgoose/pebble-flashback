@@ -166,18 +166,18 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 
     // Draw race name and location with offset for round number
     const int text_offset_x = 36;
-    GRect title_rect = GRect(text_offset_x, 2, bounds.size.w - text_offset_x - 4, 20);
-    GRect subtitle_rect = GRect(text_offset_x, 22, bounds.size.w - text_offset_x - 4, 18);
+    GRect title_rect = GRect(text_offset_x, 0, bounds.size.w - text_offset_x - 4, 22);
+    GRect subtitle_rect = GRect(text_offset_x, 22, bounds.size.w - text_offset_x - 4, 20);
 
     graphics_draw_text(ctx, race->name,
-                      fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
+                      fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD),
                       title_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
                       NULL);
 
     graphics_draw_text(ctx, race->location,
-                      fonts_get_system_font(FONT_KEY_GOTHIC_14),
+                      fonts_get_system_font(FONT_KEY_GOTHIC_18),
                       subtitle_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,

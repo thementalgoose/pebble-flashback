@@ -82,22 +82,22 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 
     // Draw team name and points with offset for position number
     const int text_offset_x = 36;
-    GRect name_rect = GRect(text_offset_x, 2, bounds.size.w - text_offset_x - 4, 20);
+    GRect name_rect = GRect(text_offset_x, 0, bounds.size.w - text_offset_x - 4, 22);
 
     // Format points display
     char points_text[32];
     snprintf(points_text, sizeof(points_text), "%d pts", team->points);
-    GRect points_rect = GRect(text_offset_x, 22, bounds.size.w - text_offset_x - 4, 18);
+    GRect points_rect = GRect(text_offset_x, 22, bounds.size.w - text_offset_x - 4, 20);
 
     graphics_draw_text(ctx, team->name,
-                      fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
+                      fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD),
                       name_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
                       NULL);
 
     graphics_draw_text(ctx, points_text,
-                      fonts_get_system_font(FONT_KEY_GOTHIC_14),
+                      fonts_get_system_font(FONT_KEY_GOTHIC_18),
                       points_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
