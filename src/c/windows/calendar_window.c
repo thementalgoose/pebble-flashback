@@ -83,11 +83,19 @@ static uint16_t get_num_rows_callback(MenuLayer *menu_layer,
 
 static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
                                  uint16_t section_index, void *context) {
-  if (section_index == SECTION_UPCOMING) {
-    menu_cell_basic_header_draw(ctx, cell_layer, "Upcoming Races");
-  } else {
-    menu_cell_basic_header_draw(ctx, cell_layer, "Previous Races");
-  }
+  const char *header_text = (section_index == SECTION_UPCOMING) ? "Upcoming Races" : "Previous Races";
+
+  // Draw header centered on round displays
+  GRect bounds = layer_get_bounds(cell_layer);
+  GTextAlignment alignment = PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft);
+
+  graphics_context_set_text_color(ctx, GColorBlack);
+  graphics_draw_text(ctx, header_text,
+                    fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
+                    GRect(PBL_IF_ROUND_ELSE(0, 5), 0, bounds.size.w - PBL_IF_ROUND_ELSE(0, 5), bounds.size.h),
+                    GTextOverflowModeTrailingEllipsis,
+                    alignment,
+                    NULL);
 }
 
 static int16_t get_header_height_callback(struct MenuLayer *menu_layer,
