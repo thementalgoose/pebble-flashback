@@ -29,7 +29,7 @@
 
 <p align="center">
   <a href="https://github.com/thementalgoose/pebble-flashback/releases"><img src="https://img.shields.io/github/v/release/thementalgoose/pebble-flashback"/></a>
-  <a href="https://developer.rebble.io/"><img src="https://img.shields.io/static/v1?label=Rebble%20App%20Listing&message=%20&logoColor=white&color=833FD6&style=flat"/></a>
+  <a href="https://apps.rebble.io/en_US/application/6929da3470731e00092debea"><img src="https://img.shields.io/static/v1?label=Rebble%20App%20Listing&message=%20&logoColor=white&color=833FD6&style=flat"/></a>
   <a href="https://dev-portal.rebble.io/"><img src="https://img.shields.io/static/v1?label=Rebble%20Dev%20Portal&message=%20&logoColor=white&color=B84E2E&style=flat"/></a>
 </p>
 
