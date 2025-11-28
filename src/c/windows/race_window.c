@@ -16,28 +16,103 @@ static bool s_data_loaded = false;
 static int s_current_race_index = -1;
 static char s_race_name[64] = "Race Schedule";
 
+// Parse pipe-delimited event data
+static void parse_event_data(const char *data) {
+  if (!data) {
+    return;
+  }
+
+  // Reset event count
+  s_event_count = 0;
+
+  const char *ptr = data;
+  char line_buffer[256];
+
+  // Parse each line manually
+  while (*ptr && s_event_count < MAX_EVENTS) {
+    // Extract one line
+    size_t line_len = 0;
+    while (*ptr && *ptr != '\n' && line_len < sizeof(line_buffer) - 1) {
+      line_buffer[line_len++] = *ptr++;
+    }
+    line_buffer[line_len] = '\0';
+
+    // Skip the newline
+    if (*ptr == '\n') {
+      ptr++;
+    }
+
+    // Skip empty lines
+    if (line_len == 0) {
+      continue;
+    }
+
+    // Parse pipe-delimited fields: label|datetime
+    char label[64] = {0};
+    char datetime[64] = {0};
+
+    // Find pipe delimiter (label|datetime)
+    const char *pipe = strchr(line_buffer, '|');
+    if (!pipe) continue;
+
+    // Extract label
+    size_t label_len = pipe - line_buffer;
+    if (label_len >= sizeof(label)) label_len = sizeof(label) - 1;
+    strncpy(label, line_buffer, label_len);
+    label[label_len] = '\0';
+
+    // Extract datetime (rest of the line)
+    strncpy(datetime, pipe + 1, sizeof(datetime) - 1);
+    datetime[sizeof(datetime) - 1] = '\0';
+
+    // Store the data
+    snprintf(s_events[s_event_count].label, sizeof(s_events[s_event_count].label), "%s", label);
+    snprintf(s_events[s_event_count].datetime, sizeof(s_events[s_event_count].datetime), "%s", datetime);
+    s_events[s_event_count].index = s_event_count;
+
+    s_event_count++;
+  }
+
+  APP_LOG(APP_LOG_LEVEL_INFO, "Parsed %d events from data", s_event_count);
+  s_data_loaded = true;
+}
+
 // Callbacks from message handler
 static void on_event_data_received(int index, const char *title,
                                    const char *subtitle, const char *extra) {
-  if (index >= 0 && index < MAX_EVENTS) {
-    snprintf(s_events[index].label, sizeof(s_events[index].label), "%s", title);
-    snprintf(s_events[index].datetime, sizeof(s_events[index].datetime), "%s",
-             subtitle);
-    s_events[index].index = index;
-
-    // Reload menu to show new event data
-    if (s_menu_layer) {
-      menu_layer_reload_data(s_menu_layer);
-    }
-  }
+  // Legacy callback - not used with new format
 }
 
 static void on_event_count_received(int count) {
-  APP_LOG(APP_LOG_LEVEL_INFO, "Expected %d events", count);
-  s_event_count = count;
-  s_data_loaded = true;
+  // Legacy callback - not used with new format
+}
 
-  // Reload menu to update from "Loading..." state
+// Custom inbox handler for race event text
+static void race_inbox_received(DictionaryIterator *iterator, void *context) {
+  Tuple *request_type_tuple = dict_find(iterator, MESSAGE_KEY_REQUEST_TYPE);
+  if (!request_type_tuple) {
+    return;
+  }
+
+  int request_type = request_type_tuple->value->int32;
+  if (request_type != REQUEST_TYPE_GET_RACE_DETAILS) {
+    return;
+  }
+
+  // Get the formatted event text
+  Tuple *title_tuple = dict_find(iterator, MESSAGE_KEY_DATA_TITLE);
+  if (!title_tuple) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "No title in race details message");
+    return;
+  }
+
+  const char *events_text = title_tuple->value->cstring;
+  APP_LOG(APP_LOG_LEVEL_INFO, "Received race events text (%d chars)", strlen(events_text));
+
+  // Parse the pipe-delimited data
+  parse_event_data(events_text);
+
+  // Reload the menu
   if (s_menu_layer) {
     menu_layer_reload_data(s_menu_layer);
   }
@@ -131,10 +206,16 @@ static void window_load(Window *window) {
 
   layer_add_child(window_layer, menu_layer_get_layer(s_menu_layer));
 
-  // Request race details
-  if (s_current_race_index >= 0) {
+  // Register our custom inbox handler for the formatted text (only once)
+  app_message_register_inbox_received(race_inbox_received);
+
+  // Request race details if not loaded
+  if (s_current_race_index >= 0 && !s_data_loaded) {
+    // Set the legacy callbacks (for compatibility, though not used)
     message_handler_set_race_details_callbacks(on_event_data_received,
                                                on_event_count_received);
+
+    // Request the data
     message_handler_request_race_details(s_current_race_index);
   }
 }
