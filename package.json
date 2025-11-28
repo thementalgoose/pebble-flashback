@@ -35,38 +35,7 @@
       "DATA_POSITION"
     ],
     "resources": {
-      "media": [
-        {
-          "type": "bitmap",
-          "name": "ICON_CALENDAR",
-          "file": "images/icon_calendar.png"
-        },
-        {
-          "type": "bitmap",
-          "name": "ICON_DRIVERS",
-          "file": "images/icon_drivers.png"
-        },
-        {
-          "type": "bitmap",
-          "name": "ICON_TEAMS",
-          "file": "images/icon_teams.png"
-        },
-        {
-          "type": "bitmap",
-          "name": "ICON_RACE_FP",
-          "file": "images/icon_race_fp.png"
-        },
-        {
-          "type": "bitmap",
-          "name": "ICON_RACE_QUALI",
-          "file": "images/icon_race_quali.png"
-        },
-        {
-          "type": "bitmap",
-          "name": "ICON_RACE_RACE",
-          "file": "images/icon_race_race.png"
-        }
-      ]
+      "media": []
     }
   }
 }

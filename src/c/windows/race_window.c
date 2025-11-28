@@ -190,11 +190,6 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  // Load icons
-  s_icon_fp = gbitmap_create_with_resource(RESOURCE_ID_ICON_RACE_FP);
-  s_icon_quali = gbitmap_create_with_resource(RESOURCE_ID_ICON_RACE_QUALI);
-  s_icon_race = gbitmap_create_with_resource(RESOURCE_ID_ICON_RACE_RACE);
-
   // Create menu layer (full screen, no status bar)
   s_menu_layer = menu_layer_create(bounds);
   menu_layer_set_click_config_onto_window(s_menu_layer, window);
