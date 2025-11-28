@@ -1,6 +1,24 @@
-# Flashback for Pebble
+<p align="center">
+  <img width="180" src="resources/app_icon.png" />
+</p>
 
-TODO
+<h1 align="center">Flashback for Pebble</h1>
+
+<p align="center">
+  <a href="https://github.com/thementalgoose/pebble-flashback/releases"><img src="https://img.shields.io/github/v/release/thementalgoose/pebble-flashback"/></a>
+  <a href="https://developer.rebble.io/"><img src="https://img.shields.io/static/v1?label=Rebble%20App%20Listing&message=%20&logoColor=white&color=833FD6&style=flat"/></a>
+  <a href="https://flashback.pages.dev"><img src="https://img.shields.io/static/v1?label=API&message=%20&logo=cloudflare&logoColor=white&color=orange&style=flat"/></a>
+  <a href="https://flashback.pages.dev/privacy-policy.html"><img src="https://img.shields.io/static/v1?label=Privacy%20Policy&message=%20&logo=cloudflare&logoColor=white&color=orange&style=flat"/></a>
+</p>
+
+Pebble watch app for the Flashback API 🎉
+
+### Currently supported
+
+- Calendar view (with races split by Upcoming and Previous)
+- Race schedule view per race
+- (PLANNED) Drivers standings
+- (PLANNED) Teams standings
 
 #### Building
 
@@ -16,6 +34,7 @@ pebble build
 # Running
 pebble install
 pebble install --cloudpebble 
+pebble install --emulator flint --logs
 ```
 
 #### Useful Links

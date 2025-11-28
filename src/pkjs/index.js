@@ -2,7 +2,7 @@
 // Handles API fetching, caching, and communication with watch
 
 const CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
-const BASE_URL = 'https://sand.flashback.pages.dev';
+const BASE_URL = 'https://flashback.pages.dev';
 
 // Import auto-generated message keys
 var messageKeys = require('message_keys');
