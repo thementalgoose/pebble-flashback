@@ -17,6 +17,7 @@ jobs:
         run: |
           docker run --rm \
             -v "${PWD}:/pebble" \
+            -w /pebble \
             rebble/pebble-sdk \
             pebble build
 
