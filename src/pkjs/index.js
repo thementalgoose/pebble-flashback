@@ -1,7 +1,7 @@
 // PebbleKit JS - F1 Flashback Data Layer
 // Handles API fetching, caching, and communication with watch
 
-const CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
+const CACHE_DURATION = 1000 * 60 * 60 * 12; // 12 hours
 const BASE_URL = 'https://flashback.pages.dev';
 
 // Import auto-generated message keys
@@ -160,46 +160,54 @@ function sendRacesToWatch(overviewData) {
     const pastRaces = allRaces.filter(race => new Date(race.date) < now)
         .sort((a, b) => b.round - a.round); // Reverse chronological (most recent first)
 
-    // Send upcoming races first, then past races
-    const races = [...upcomingRaces, ...pastRaces];
+    console.log(`Formatting ${upcomingRaces.length} upcoming and ${pastRaces.length} past races`);
 
-    console.log(`Sending ${races.length} races to watch (${upcomingRaces.length} upcoming, ${pastRaces.length} past)`);
+    // Build pipe-delimited strings for upcoming races
+    const upcomingLines = upcomingRaces.map(race => {
+        const location = `${race.circuit.city}, ${race.circuit.country}`;
+        return `${race.round}|${race.name}|${location}`;
+    });
 
-    // Send count first
+    // Build pipe-delimited strings for past races
+    const pastLines = pastRaces.map(race => {
+        const location = `${race.circuit.city}, ${race.circuit.country}`;
+        return `${race.round}|${race.name}|${location}`;
+    });
+
+    const upcomingText = upcomingLines.join('\n');
+    const pastText = pastLines.join('\n');
+
+    console.log('Sending upcoming races as single message');
+    console.log('Upcoming text length:', upcomingText.length);
+
+    // Send upcoming races
     Pebble.sendAppMessage({
         REQUEST_TYPE: REQUEST_TYPES.GET_OVERVIEW,
-        DATA_COUNT: races.length
+        DATA_INDEX: 0, // 0 = upcoming
+        DATA_TITLE: upcomingText
     }, function () {
-        console.log('Sent race count');
+        console.log('Sent upcoming races successfully');
     }, function (e) {
-        console.error('Failed to send race count:', e);
+        console.error('Failed to send upcoming races:', e);
+        console.error('Error details:', JSON.stringify(e));
     });
 
-    // Send each race
-    races.forEach((race, index) => {
-        const message = {
+    console.log('Sending past races as single message');
+    console.log('Past text length:', pastText.length);
+
+    // Send past races (with a small delay to ensure ordering)
+    setTimeout(() => {
+        Pebble.sendAppMessage({
             REQUEST_TYPE: REQUEST_TYPES.GET_OVERVIEW,
-            DATA_INDEX: index,
-            DATA_TITLE: race.name,
-            DATA_SUBTITLE: race.circuit.city + ', ' + race.circuit.country,
-            DATA_EXTRA: race.date, // Race date for sorting
-            DATA_ROUND: race.round // Round number (1-24)
-        };
-
-        // Add delay between messages to avoid overwhelming the watch
-        // Real devices need more time than emulator (250ms vs 100ms)
-        setTimeout(() => {
-            Pebble.sendAppMessage(message,
-                function () {
-                    console.log(`Sent race ${index}: ${race.name}`);
-                },
-                function (e) {
-                    console.error(`Failed to send race ${index}:`, e);
-                    console.error('Error details:', JSON.stringify(e));
-                }
-            );
-        }, index * 175);
-    });
+            DATA_INDEX: 1, // 1 = past
+            DATA_TITLE: pastText
+        }, function () {
+            console.log('Sent past races successfully');
+        }, function (e) {
+            console.error('Failed to send past races:', e);
+            console.error('Error details:', JSON.stringify(e));
+        });
+    }, 100);
 }
 
 // Process race details and send events to watch
@@ -219,43 +227,29 @@ function sendRaceDetailsToWatch(overviewData, raceRound) {
 
     const events = race.schedule || [];
 
-    console.log(`Sending ${events.length} events for ${race.name} (round ${raceRound})`);
+    console.log(`Formatting ${events.length} events for ${race.name} (round ${raceRound})`);
 
-    // Send count first
-    Pebble.sendAppMessage({
-        REQUEST_TYPE: REQUEST_TYPES.GET_RACE_DETAILS,
-        DATA_COUNT: events.length
-    }, function () {
-        console.log('Sent event count');
-    }, function (e) {
-        console.error('Failed to send event count:', e);
-    });
-
-    // Send each event
-    events.forEach((event, index) => {
+    // Build pipe-delimited strings for all events
+    const eventLines = events.map(event => {
         // Combine date and time into ISO format
         const dateTimeStr = event.date + 'T' + event.time;
+        return `${event.label}|${dateTimeStr}`;
+    });
 
-        const message = {
-            REQUEST_TYPE: REQUEST_TYPES.GET_RACE_DETAILS,
-            DATA_INDEX: index,
-            DATA_TITLE: event.label,
-            DATA_SUBTITLE: dateTimeStr, // Will be parsed and formatted on watch
-            DATA_EXTRA: '' // Reserved for future use
-        };
+    const eventsText = eventLines.join('\n');
 
-        // Add delay between messages for real device compatibility
-        setTimeout(() => {
-            Pebble.sendAppMessage(message,
-                function () {
-                    console.log(`Sent event ${index}: ${event.label}`);
-                },
-                function (e) {
-                    console.error(`Failed to send event ${index}:`, e);
-                    console.error('Error details:', JSON.stringify(e));
-                }
-            );
-        }, index * 175);
+    console.log('Sending race events as single message');
+    console.log('Events text length:', eventsText.length);
+
+    // Send as a single message with the formatted text
+    Pebble.sendAppMessage({
+        REQUEST_TYPE: REQUEST_TYPES.GET_RACE_DETAILS,
+        DATA_TITLE: eventsText
+    }, function () {
+        console.log('Sent race events successfully');
+    }, function (e) {
+        console.error('Failed to send race events:', e);
+        console.error('Error details:', JSON.stringify(e));
     });
 }
 
@@ -277,20 +271,11 @@ function sendDriverStandingsToWatch(standingsData) {
     // Convert driverStandings object to array and sort by position
     const standingsArray = Object.values(driverStandings).sort((a, b) => a.position - b.position);
 
-    console.log(`Sending ${standingsArray.length} driver standings to watch`);
+    console.log(`Formatting ${standingsArray.length} driver standings as text`);
 
-    // Send count first
-    Pebble.sendAppMessage({
-        REQUEST_TYPE: REQUEST_TYPES.GET_DRIVER_STANDINGS,
-        DATA_COUNT: standingsArray.length
-    }, function () {
-        console.log('Sent driver standings count');
-    }, function (e) {
-        console.error('Failed to send driver standings count:', e);
-    });
-
-    // Send each driver standing
-    standingsArray.forEach((standing, index) => {
+    // Build a formatted string with all driver standings
+    const lines = [];
+    standingsArray.forEach((standing) => {
         const driver = drivers[standing.driverId];
         if (!driver) {
             console.error('Driver not found:', standing.driverId);
@@ -300,27 +285,24 @@ function sendDriverStandingsToWatch(standingsData) {
         const fullName = driver.firstName + ' ' + driver.lastName;
         const code = driver.code || standing.driverId.toUpperCase().substring(0, 3);
 
-        const message = {
-            REQUEST_TYPE: REQUEST_TYPES.GET_DRIVER_STANDINGS,
-            DATA_INDEX: index,
-            DATA_TITLE: fullName,
-            DATA_SUBTITLE: code,
-            DATA_POINTS: standing.points,
-            DATA_POSITION: standing.position
-        };
+        // Format: "position|name|code|points pts"
+        lines.push(`${standing.position}|${fullName}|${code}|${standing.points} pts`);
+    });
 
-        // Add delay between messages for real device compatibility
-        setTimeout(() => {
-            Pebble.sendAppMessage(message,
-                function () {
-                    console.log(`Sent driver ${index}: ${fullName} (${code}) - ${standing.points} pts`);
-                },
-                function (e) {
-                    console.error(`Failed to send driver ${index}:`, e);
-                    console.error('Error details:', JSON.stringify(e));
-                }
-            );
-        }, index * 175);
+    const formattedText = lines.join('\n');
+
+    console.log('Sending driver standings as single message');
+    console.log('Text length:', formattedText.length);
+
+    // Send as a single message with the formatted text
+    Pebble.sendAppMessage({
+        REQUEST_TYPE: REQUEST_TYPES.GET_DRIVER_STANDINGS,
+        DATA_TITLE: formattedText
+    }, function () {
+        console.log('Sent driver standings text successfully');
+    }, function (e) {
+        console.error('Failed to send driver standings:', e);
+        console.error('Error details:', JSON.stringify(e));
     });
 }
 
@@ -342,46 +324,35 @@ function sendTeamStandingsToWatch(standingsData) {
     // Convert constructorStandings object to array and sort by position
     const standingsArray = Object.values(constructorStandings).sort((a, b) => a.position - b.position);
 
-    console.log(`Sending ${standingsArray.length} team standings to watch`);
+    console.log(`Formatting ${standingsArray.length} team standings as text`);
 
-    // Send count first
-    Pebble.sendAppMessage({
-        REQUEST_TYPE: REQUEST_TYPES.GET_TEAM_STANDINGS,
-        DATA_COUNT: standingsArray.length
-    }, function () {
-        console.log('Sent team standings count');
-    }, function (e) {
-        console.error('Failed to send team standings count:', e);
-    });
-
-    // Send each team standing
-    standingsArray.forEach((standing, index) => {
+    // Build a formatted string with all team standings
+    const lines = [];
+    standingsArray.forEach((standing) => {
         const constructor = constructors[standing.constructorId];
         if (!constructor) {
             console.error('Constructor not found:', standing.constructorId);
             return;
         }
 
-        const message = {
-            REQUEST_TYPE: REQUEST_TYPES.GET_TEAM_STANDINGS,
-            DATA_INDEX: index,
-            DATA_TITLE: constructor.name,
-            DATA_POINTS: standing.points,
-            DATA_POSITION: standing.position
-        };
+        // Format: "1. Team Name - 123 pts"
+        lines.push(`${standing.position}|${constructor.name}|${standing.points} pts`);
+    });
 
-        // Add delay between messages for real device compatibility
-        setTimeout(() => {
-            Pebble.sendAppMessage(message,
-                function () {
-                    console.log(`Sent team ${index}: ${constructor.name} - ${standing.points} pts`);
-                },
-                function (e) {
-                    console.error(`Failed to send team ${index}:`, e);
-                    console.error('Error details:', JSON.stringify(e));
-                }
-            );
-        }, index * 175);
+    const formattedText = lines.join('\n');
+
+    console.log('Sending team standings as single message');
+    console.log('Text length:', formattedText.length);
+
+    // Send as a single message with the formatted text
+    Pebble.sendAppMessage({
+        REQUEST_TYPE: REQUEST_TYPES.GET_TEAM_STANDINGS,
+        DATA_TITLE: formattedText
+    }, function () {
+        console.log('Sent team standings text successfully');
+    }, function (e) {
+        console.error('Failed to send team standings:', e);
+        console.error('Error details:', JSON.stringify(e));
     });
 }
 
