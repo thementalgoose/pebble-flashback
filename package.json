@@ -35,7 +35,14 @@
       "DATA_POSITION"
     ],
     "resources": {
-      "media": []
+      "media": [
+        {
+          "type": "bitmap",
+          "name": "MENU_ICON",
+          "file": "images/menuicon.png",
+          "menuIcon": true
+        }
+      ]
     }
   }
 }
