@@ -17,6 +17,11 @@ static bool s_data_loaded = false;
 static int s_current_race_index = -1;
 static char s_race_name[64] = "Race Schedule";
 
+// Menu icons
+static GBitmap *s_icon_fp;
+static GBitmap *s_icon_quali;
+static GBitmap *s_icon_race;
+
 // Parse pipe-delimited event data
 static void parse_event_data(const char *data) {
   if (!data) {
@@ -221,6 +226,11 @@ static void window_load(Window *window) {
 
 static void window_unload(Window *window) {
   menu_layer_destroy(s_menu_layer);
+
+  // Destroy menu icons
+  gbitmap_destroy(s_icon_fp);
+  gbitmap_destroy(s_icon_quali);
+  gbitmap_destroy(s_icon_race);
 }
 
 void race_window_push(int race_index, const char *race_name) {

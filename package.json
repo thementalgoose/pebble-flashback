@@ -41,36 +41,6 @@
           "name": "MENU_ICON",
           "file": "images/menuicon.png",
           "menuIcon": true
-        },
-        {
-          "type": "bitmap",
-          "name": "ICON_CALENDAR_LIGHT",
-          "file": "images/icon_calendar_light.png"
-        },
-        {
-          "type": "bitmap",
-          "name": "ICON_HELMET_LIGHT",
-          "file": "images/icon_helmet_light.png"
-        },
-        {
-          "type": "bitmap",
-          "name": "ICON_TROPHY_LIGHT",
-          "file": "images/icon_trophy_light.png"
-        },
-        {
-          "type": "bitmap",
-          "name": "ICON_CALENDAR_DARK",
-          "file": "images/icon_calendar_dark.png"
-        },
-        {
-          "type": "bitmap",
-          "name": "ICON_HELMET_DARK",
-          "file": "images/icon_helmet_dark.png"
-        },
-        {
-          "type": "bitmap",
-          "name": "ICON_TROPHY_DARK",
-          "file": "images/icon_trophy_dark.png"
         }
       ]
     }
