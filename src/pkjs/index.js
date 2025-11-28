@@ -198,7 +198,7 @@ function sendRacesToWatch(overviewData) {
                     console.error('Error details:', JSON.stringify(e));
                 }
             );
-        }, index * 100);
+        }, index * 175);
     });
 }
 
@@ -255,7 +255,7 @@ function sendRaceDetailsToWatch(overviewData, raceRound) {
                     console.error('Error details:', JSON.stringify(e));
                 }
             );
-        }, index * 100);
+        }, index * 175);
     });
 }
 
@@ -320,7 +320,7 @@ function sendDriverStandingsToWatch(standingsData) {
                     console.error('Error details:', JSON.stringify(e));
                 }
             );
-        }, index * 100);
+        }, index * 175);
     });
 }
 
@@ -381,7 +381,7 @@ function sendTeamStandingsToWatch(standingsData) {
                     console.error('Error details:', JSON.stringify(e));
                 }
             );
-        }, index * 100);
+        }, index * 175);
     });
 }
 
