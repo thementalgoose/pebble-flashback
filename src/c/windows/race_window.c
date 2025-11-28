@@ -129,15 +129,34 @@ static void window_unload(Window *window) {
 }
 
 void race_window_push(int race_index, const char *race_name) {
-  s_current_race_index = race_index;
-  s_data_loaded = false;
-  s_event_count = 0;
+  // Check if this is a different race than the currently loaded one
+  bool is_different_race = (race_index != s_current_race_index);
 
-  // Store race name for header display
-  if (race_name) {
-    snprintf(s_race_name, sizeof(s_race_name), "%s", race_name);
-  } else {
-    snprintf(s_race_name, sizeof(s_race_name), "Race Schedule");
+  s_current_race_index = race_index;
+
+  // Only clear data if switching to a different race
+  if (is_different_race) {
+    s_data_loaded = false;
+    s_event_count = 0;
+
+    // Clear old event data to prevent showing stale data
+    memset(s_events, 0, sizeof(s_events));
+
+    // Store race name for header display
+    if (race_name) {
+      snprintf(s_race_name, sizeof(s_race_name), "%s", race_name);
+    } else {
+      snprintf(s_race_name, sizeof(s_race_name), "Race Schedule");
+    }
+
+    // If window is already loaded, reload menu and request new data
+    if (s_menu_layer) {
+      menu_layer_reload_data(s_menu_layer);
+      // Request race details for the new race
+      message_handler_set_race_details_callbacks(on_event_data_received,
+                                                 on_event_count_received);
+      message_handler_request_race_details(s_current_race_index);
+    }
   }
 
   if (!s_window) {

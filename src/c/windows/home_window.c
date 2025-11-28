@@ -24,21 +24,21 @@ static GBitmap *s_icon_trophy;
 // Menu layer callbacks
 static uint16_t get_num_rows_callback(MenuLayer *menu_layer,
                                       uint16_t section_index, void *context) {
-  return NUM_MENU_ITEMS;
+  return 1; // NUM_MENU_ITEMS;
 }
 
 static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
                               MenuIndex *cell_index, void *context) {
   switch (cell_index->row) {
   case MENU_ITEM_CALENDAR:
-    menu_cell_basic_draw(ctx, cell_layer, "Calendar", NULL, NULL);
+    menu_cell_basic_draw(ctx, cell_layer, "Calendar", NULL, s_icon_calendar);
     break;
-  case MENU_ITEM_DRIVER_STANDINGS:
-    menu_cell_basic_draw(ctx, cell_layer, "Driver Standings", NULL, NULL);
-    break;
-  case MENU_ITEM_TEAM_STANDINGS:
-    menu_cell_basic_draw(ctx, cell_layer, "Team Standings", NULL, NULL);
-    break;
+  // case MENU_ITEM_DRIVER_STANDINGS:
+  //   menu_cell_basic_draw(ctx, cell_layer, "Driver Standings", NULL, s_icon_helmet);
+  //   break;
+  // case MENU_ITEM_TEAM_STANDINGS:
+  //   menu_cell_basic_draw(ctx, cell_layer, "Team Standings", NULL, s_icon_trophy);
+  //   break;
   }
 }
 
@@ -87,6 +87,11 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
+  // Load menu icons
+  s_icon_calendar = gbitmap_create_with_resource(RESOURCE_ID_ICON_CALENDAR);
+  s_icon_helmet = gbitmap_create_with_resource(RESOURCE_ID_ICON_HELMET);
+  s_icon_trophy = gbitmap_create_with_resource(RESOURCE_ID_ICON_TROPHY);
+
   // Create menu layer (full screen, no status bar)
   s_menu_layer = menu_layer_create(bounds);
   menu_layer_set_click_config_onto_window(s_menu_layer, window);
@@ -111,6 +116,11 @@ static void window_load(Window *window) {
 
 static void window_unload(Window *window) {
   menu_layer_destroy(s_menu_layer);
+
+  // Destroy menu icons
+  gbitmap_destroy(s_icon_calendar);
+  gbitmap_destroy(s_icon_helmet);
+  gbitmap_destroy(s_icon_trophy);
 }
 
 void home_window_push(void) {
