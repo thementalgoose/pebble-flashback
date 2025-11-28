@@ -106,10 +106,10 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
   Race *race = NULL;
 
   if (cell_index->section == SECTION_UPCOMING) {
-    // For upcoming races, iterate backwards to show chronologically (soonest first)
-    // Since races arrive in reverse order, iterating backwards gives us chronological order
+    // For upcoming races, iterate forward
+    // Races arrive in order: upcoming (chronological), then past (reverse chronological)
     int upcoming_index = 0;
-    for (int i = s_race_count - 1; i >= 0; i--) {
+    for (int i = 0; i < s_race_count; i++) {
       int comparison = utils_compare_date_with_now(s_races[i].date);
       if (comparison >= 0) {
         if (upcoming_index == cell_index->row) {
@@ -120,8 +120,8 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
       }
     }
   } else {
-    // For previous races, iterate forwards to show reverse chronologically (most recent first)
-    // Since races arrive in reverse order, iterating forwards gives us reverse chronological order
+    // For previous races, iterate forward
+    // Past races already arrive in reverse chronological order (most recent first)
     int previous_index = 0;
     for (int i = 0; i < s_race_count; i++) {
       int comparison = utils_compare_date_with_now(s_races[i].date);
@@ -156,9 +156,9 @@ static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
   int selected_index = -1;
 
   if (cell_index->section == SECTION_UPCOMING) {
-    // For upcoming races, iterate backwards to match display order (chronological)
+    // For upcoming races, iterate forward to match display order (chronological)
     int upcoming_index = 0;
-    for (int i = s_race_count - 1; i >= 0; i--) {
+    for (int i = 0; i < s_race_count; i++) {
       int comparison = utils_compare_date_with_now(s_races[i].date);
       if (comparison >= 0) {
         if (upcoming_index == cell_index->row) {
@@ -169,7 +169,7 @@ static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
       }
     }
   } else {
-    // For previous races, iterate forwards to match display order (reverse chronological)
+    // For previous races, iterate forward to match display order (reverse chronological)
     int previous_index = 0;
     for (int i = 0; i < s_race_count; i++) {
       int comparison = utils_compare_date_with_now(s_races[i].date);

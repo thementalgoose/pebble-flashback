@@ -149,11 +149,20 @@ function sendRacesToWatch(overviewData) {
         return;
     }
 
-    // Convert data object to array and sort by round in reverse order
-    // This ensures upcoming races are populated first
-    const races = Object.values(overviewData.data).sort((a, b) => b.round - a.round);
+    const allRaces = Object.values(overviewData.data);
+    const now = new Date();
 
-    console.log(`Sending ${races.length} races to watch (reverse order)`);
+    // Separate races into upcoming and past
+    const upcomingRaces = allRaces.filter(race => new Date(race.date) >= now)
+        .sort((a, b) => a.round - b.round); // Chronological order (earliest first)
+
+    const pastRaces = allRaces.filter(race => new Date(race.date) < now)
+        .sort((a, b) => b.round - a.round); // Reverse chronological (most recent first)
+
+    // Send upcoming races first, then past races
+    const races = [...upcomingRaces, ...pastRaces];
+
+    console.log(`Sending ${races.length} races to watch (${upcomingRaces.length} upcoming, ${pastRaces.length} past)`);
 
     // Send count first
     Pebble.sendAppMessage({
