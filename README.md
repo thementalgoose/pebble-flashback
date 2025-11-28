@@ -8,6 +8,14 @@
     <th>flint</th>
   </tr>
   <tr>
+    <th>Pebble Classic</th>
+    <th>Pebble Time</th>
+    <th>Pebble Time Round</th>
+    <th>Pebble 2</th>
+    <th>Pebble 2 Duo</th>
+    <th>Pebble Time 2</th>
+  </tr>
+  <tr>
     <td><img src="appstore/aplite/menu.png" width="140" /></td>
     <td><img src="appstore/basalt/calendar.png" width="140" /></td>
     <td><img src="appstore/chalk/calendar.png" width="140" /></td>
@@ -54,6 +62,7 @@ pebble install --emulator flint --logs
 
 #### Useful Links
 
-- "UI samples" - https://github.com/pebble-examples/ui-patterns/
-- "Modular architecture" - https://github.com/pebble-examples/modular-app-example/blob/master/src/windows/main_window.h 
-- "Best Practices" - https://developer.rebble.io/guides/best-practices/modular-app-architecture/
+- [Hardware information](https://developer.rebble.io/guides/tools-and-resources/hardware-information/)
+- [UI Samples](https://github.com/pebble-examples/ui-patterns/)
+- [Modular Architecture](https://github.com/pebble-examples/modular-app-example/blob/master/src/windows/main_window.h)
+- [Best Practices](https://developer.rebble.io/guides/best-practices/modular-app-architecture/)
