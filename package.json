@@ -38,33 +38,33 @@
       "media": [
         {
           "type": "bitmap",
-          "name": "ICON_CALENDAR_LIGHT",
-          "file": "images/icon_calendar_light.png"
+          "name": "ICON_CALENDAR",
+          "file": "images/icon_calendar.png"
         },
         {
           "type": "bitmap",
-          "name": "ICON_CALENDAR_DARK",
-          "file": "images/icon_calendar_dark.png"
+          "name": "ICON_DRIVERS",
+          "file": "images/icon_drivers.png"
         },
         {
           "type": "bitmap",
-          "name": "ICON_DRIVERS_LIGHT",
-          "file": "images/icon_drivers_light.png"
+          "name": "ICON_TEAMS",
+          "file": "images/icon_teams.png"
         },
         {
           "type": "bitmap",
-          "name": "ICON_DRIVERS_DARK",
-          "file": "images/icon_drivers_dark.png"
+          "name": "ICON_RACE_FP",
+          "file": "images/icon_race_fp.png"
         },
         {
           "type": "bitmap",
-          "name": "ICON_TEAMS_LIGHT",
-          "file": "images/icon_teams_light.png"
+          "name": "ICON_RACE_QUALI",
+          "file": "images/icon_race_quali.png"
         },
         {
           "type": "bitmap",
-          "name": "ICON_TEAMS_DARK",
-          "file": "images/icon_teams_dark.png"
+          "name": "ICON_RACE_RACE",
+          "file": "images/icon_race_race.png"
         }
       ]
     }

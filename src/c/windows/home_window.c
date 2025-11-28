@@ -14,12 +14,9 @@ static MenuLayer *s_menu_layer;
 static char s_season_text[16];
 
 // Menu icons
-static GBitmap *s_icon_calendar_light;
-static GBitmap *s_icon_drivers_light;
-static GBitmap *s_icon_teams_light;
-static GBitmap *s_icon_calendar_dark;
-static GBitmap *s_icon_drivers_dark;
-static GBitmap *s_icon_teams_dark;
+static GBitmap *s_icon_calendar;
+static GBitmap *s_icon_drivers;
+static GBitmap *s_icon_teams;
 
 // Menu items
 #define MENU_ITEM_CALENDAR 0
@@ -56,15 +53,15 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 
   switch (cell_index->row) {
   case MENU_ITEM_CALENDAR:
-    icon = (selected && SELECTED_ICON_LIGHT) ? s_icon_calendar_light : s_icon_calendar_dark;
+    icon = s_icon_calendar;
     title = "Calendar";
     break;
   case MENU_ITEM_DRIVER_STANDINGS:
-    icon = (selected && SELECTED_ICON_LIGHT) ? s_icon_drivers_light : s_icon_drivers_dark;
+    icon = s_icon_drivers;
     title = "Driver Standings";
     break;
   case MENU_ITEM_TEAM_STANDINGS:
-    icon = (selected && SELECTED_ICON_LIGHT) ? s_icon_teams_light : s_icon_teams_dark;
+    icon = s_icon_teams;
     title = "Team Standings";
     break;
   }
@@ -146,21 +143,16 @@ static void window_load(Window *window) {
   GRect bounds = layer_get_bounds(window_layer);
 
   // Load menu icons
-  s_icon_calendar_light = gbitmap_create_with_resource(RESOURCE_ID_ICON_CALENDAR_LIGHT);
-  s_icon_drivers_light = gbitmap_create_with_resource(RESOURCE_ID_ICON_DRIVERS_LIGHT);
-  s_icon_teams_light = gbitmap_create_with_resource(RESOURCE_ID_ICON_TEAMS_LIGHT);
-  s_icon_calendar_dark = gbitmap_create_with_resource(RESOURCE_ID_ICON_CALENDAR_DARK);
-  s_icon_drivers_dark = gbitmap_create_with_resource(RESOURCE_ID_ICON_DRIVERS_DARK);
-  s_icon_teams_dark = gbitmap_create_with_resource(RESOURCE_ID_ICON_TEAMS_DARK);
+  s_icon_calendar = gbitmap_create_with_resource(RESOURCE_ID_ICON_CALENDAR);
+  s_icon_drivers = gbitmap_create_with_resource(RESOURCE_ID_ICON_DRIVERS);
+  s_icon_teams = gbitmap_create_with_resource(RESOURCE_ID_ICON_TEAMS);
 
   // Create menu layer (full screen, no status bar)
   s_menu_layer = menu_layer_create(bounds);
   menu_layer_set_click_config_onto_window(s_menu_layer, window);
 
   // Set custom color highlight on color displays
-#ifdef PBL_COLOR
-  menu_layer_set_highlight_colors(s_menu_layer, GColorFromHEX(0x489bb0), GColorWhite);
-#endif
+  menu_layer_set_highlight_colors(s_menu_layer, HIGHLIGHT_BG, GColorWhite);
 
   // Set callbacks
   menu_layer_set_callbacks(s_menu_layer, NULL,
@@ -184,12 +176,9 @@ static void window_unload(Window *window) {
   menu_layer_destroy(s_menu_layer);
 
   // Destroy menu icons
-  gbitmap_destroy(s_icon_calendar_light);
-  gbitmap_destroy(s_icon_drivers_light);
-  gbitmap_destroy(s_icon_teams_light);
-  gbitmap_destroy(s_icon_calendar_dark);
-  gbitmap_destroy(s_icon_drivers_dark);
-  gbitmap_destroy(s_icon_teams_dark);
+  gbitmap_destroy(s_icon_calendar);
+  gbitmap_destroy(s_icon_drivers);
+  gbitmap_destroy(s_icon_teams);
 }
 
 void home_window_push(void) {
