@@ -67,6 +67,15 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 
     // Check if this cell is selected to invert text color
     bool selected = menu_layer_is_index_selected(s_menu_layer, cell_index);
+
+    // Draw custom color selection background on color displays
+    if (selected) {
+#ifdef PBL_COLOR
+      graphics_context_set_fill_color(ctx, GColorFromHEX(0x75b0bf));
+      graphics_fill_rect(ctx, bounds, 0, GCornerNone);
+#endif
+    }
+
     GColor text_color = selected ? GColorWhite : GColorBlack;
 
     // Draw position number on the left
