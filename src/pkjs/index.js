@@ -255,6 +255,130 @@ function sendRaceDetailsToWatch(overviewData, raceRound) {
     });
 }
 
+// Process standings data and send driver standings to watch
+function sendDriverStandingsToWatch(standingsData) {
+    if (!standingsData || !standingsData.data) {
+        console.error('Invalid standings data');
+        return;
+    }
+
+    const driverStandings = standingsData.data.driverStandings;
+    const drivers = standingsData.data.drivers;
+
+    if (!driverStandings || !drivers) {
+        console.error('Missing driver standings or drivers data');
+        return;
+    }
+
+    // Convert driverStandings object to array and sort by position
+    const standingsArray = Object.values(driverStandings).sort((a, b) => a.position - b.position);
+
+    console.log(`Sending ${standingsArray.length} driver standings to watch`);
+
+    // Send count first
+    Pebble.sendAppMessage({
+        [messageKeys.REQUEST_TYPE]: REQUEST_TYPES.GET_DRIVER_STANDINGS,
+        [messageKeys.DATA_COUNT]: standingsArray.length
+    }, function () {
+        console.log('Sent driver standings count');
+    }, function (e) {
+        console.error('Failed to send driver standings count:', e);
+    });
+
+    // Send each driver standing
+    standingsArray.forEach((standing, index) => {
+        const driver = drivers[standing.driverId];
+        if (!driver) {
+            console.error('Driver not found:', standing.driverId);
+            return;
+        }
+
+        const fullName = driver.firstName + ' ' + driver.lastName;
+        const code = driver.code || standing.driverId.toUpperCase().substring(0, 3);
+
+        const message = {
+            [messageKeys.REQUEST_TYPE]: REQUEST_TYPES.GET_DRIVER_STANDINGS,
+            [messageKeys.DATA_INDEX]: index,
+            [messageKeys.DATA_TITLE]: fullName,
+            [messageKeys.DATA_SUBTITLE]: code,
+            [messageKeys.DATA_POINTS]: standing.points,
+            [messageKeys.DATA_POSITION]: standing.position
+        };
+
+        // Add small delay between messages
+        setTimeout(() => {
+            Pebble.sendAppMessage(message,
+                function () {
+                    console.log(`Sent driver ${index}: ${fullName} (${code}) - ${standing.points} pts`);
+                },
+                function (e) {
+                    console.error(`Failed to send driver ${index}:`, e);
+                }
+            );
+        }, index * 100);
+    });
+}
+
+// Process standings data and send team standings to watch
+function sendTeamStandingsToWatch(standingsData) {
+    if (!standingsData || !standingsData.data) {
+        console.error('Invalid standings data');
+        return;
+    }
+
+    const constructorStandings = standingsData.data.constructorStandings;
+    const constructors = standingsData.data.constructors;
+
+    if (!constructorStandings || !constructors) {
+        console.error('Missing constructor standings or constructors data');
+        return;
+    }
+
+    // Convert constructorStandings object to array and sort by position
+    const standingsArray = Object.values(constructorStandings).sort((a, b) => a.position - b.position);
+
+    console.log(`Sending ${standingsArray.length} team standings to watch`);
+
+    // Send count first
+    Pebble.sendAppMessage({
+        [messageKeys.REQUEST_TYPE]: REQUEST_TYPES.GET_TEAM_STANDINGS,
+        [messageKeys.DATA_COUNT]: standingsArray.length
+    }, function () {
+        console.log('Sent team standings count');
+    }, function (e) {
+        console.error('Failed to send team standings count:', e);
+    });
+
+    // Send each team standing
+    standingsArray.forEach((standing, index) => {
+        const constructor = constructors[standing.constructorId];
+        if (!constructor) {
+            console.error('Constructor not found:', standing.constructorId);
+            return;
+        }
+
+        const message = {
+            [messageKeys.REQUEST_TYPE]: REQUEST_TYPES.GET_TEAM_STANDINGS,
+            [messageKeys.DATA_INDEX]: index,
+            [messageKeys.DATA_TITLE]: constructor.name,
+            [messageKeys.DATA_POINTS]: standing.points,
+            [messageKeys.DATA_POSITION]: standing.position
+        };
+
+        // Add small delay between messages
+        setTimeout(() => {
+            Pebble.sendAppMessage(message,
+                function () {
+                    console.log(`Sent team ${index}: ${constructor.name} - ${standing.points} pts`);
+                },
+                function (e) {
+                    console.error(`Failed to send team ${index}:`, e);
+                }
+            );
+        }, index * 100);
+    });
+}
+
 // Current season helper
 function getCurrentSeason() {
     return new Date().getFullYear();
@@ -285,13 +409,17 @@ Pebble.addEventListener('appmessage', function (e) {
             break;
 
         case REQUEST_TYPES.GET_DRIVER_STANDINGS:
-            console.log('Request: GET_DRIVER_STANDINGS (not implemented)');
-            // TODO: Implement driver standings
+            console.log('Request: GET_DRIVER_STANDINGS');
+            fetchStandings(season)
+                .then(data => sendDriverStandingsToWatch(data))
+                .catch(error => console.error('Failed to get driver standings:', error));
             break;
 
         case REQUEST_TYPES.GET_TEAM_STANDINGS:
-            console.log('Request: GET_TEAM_STANDINGS (not implemented)');
-            // TODO: Implement team standings
+            console.log('Request: GET_TEAM_STANDINGS');
+            fetchStandings(season)
+                .then(data => sendTeamStandingsToWatch(data))
+                .catch(error => console.error('Failed to get team standings:', error));
             break;
 
         default:

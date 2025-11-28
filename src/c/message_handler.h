@@ -19,6 +19,13 @@ typedef void (*RaceDetailsDataCallback)(int index, const char *title,
                                         const char *subtitle,
                                         const char *extra);
 typedef void (*RaceDetailsCompleteCallback)(int count);
+typedef void (*DriverStandingsDataCallback)(int index, const char *name,
+                                            const char *code, int points,
+                                            int position);
+typedef void (*DriverStandingsCompleteCallback)(int count);
+typedef void (*TeamStandingsDataCallback)(int index, const char *name,
+                                          int points, int position);
+typedef void (*TeamStandingsCompleteCallback)(int count);
 
 // Initialize message handler
 void message_handler_init(void);
@@ -29,9 +36,16 @@ void message_handler_deinit(void);
 // Request data from JS
 void message_handler_request_overview(void);
 void message_handler_request_race_details(int race_index);
+void message_handler_request_driver_standings(void);
+void message_handler_request_team_standings(void);
 
 // Register callbacks
 void message_handler_set_overview_callbacks(
     OverviewDataCallback data_cb, OverviewCompleteCallback complete_cb);
 void message_handler_set_race_details_callbacks(
     RaceDetailsDataCallback data_cb, RaceDetailsCompleteCallback complete_cb);
+void message_handler_set_driver_standings_callbacks(
+    DriverStandingsDataCallback data_cb,
+    DriverStandingsCompleteCallback complete_cb);
+void message_handler_set_team_standings_callbacks(
+    TeamStandingsDataCallback data_cb, TeamStandingsCompleteCallback complete_cb);

@@ -6,6 +6,10 @@ static OverviewDataCallback s_overview_data_callback = NULL;
 static OverviewCompleteCallback s_overview_complete_callback = NULL;
 static RaceDetailsDataCallback s_race_details_data_callback = NULL;
 static RaceDetailsCompleteCallback s_race_details_complete_callback = NULL;
+static DriverStandingsDataCallback s_driver_standings_data_callback = NULL;
+static DriverStandingsCompleteCallback s_driver_standings_complete_callback = NULL;
+static TeamStandingsDataCallback s_team_standings_data_callback = NULL;
+static TeamStandingsCompleteCallback s_team_standings_complete_callback = NULL;
 
 // Message received handler
 static void inbox_received_callback(DictionaryIterator *iterator,
@@ -73,6 +77,63 @@ static void inbox_received_callback(DictionaryIterator *iterator,
 
       if (s_race_details_data_callback) {
         s_race_details_data_callback(index, title, subtitle, extra);
+      }
+    }
+    break;
+
+  case REQUEST_TYPE_GET_DRIVER_STANDINGS:
+    if (count_tuple) {
+      // This is the count message
+      int count = count_tuple->value->int32;
+      APP_LOG(APP_LOG_LEVEL_INFO, "Received driver standings count: %d", count);
+      if (s_driver_standings_complete_callback) {
+        s_driver_standings_complete_callback(count);
+      }
+    } else if (index_tuple && title_tuple && subtitle_tuple) {
+      // This is a data message
+      int index = index_tuple->value->int32;
+      const char *name = title_tuple->value->cstring;
+      const char *code = subtitle_tuple->value->cstring;
+
+      // Read points and position
+      Tuple *points_tuple = dict_find(iterator, MESSAGE_KEY_DATA_POINTS);
+      Tuple *position_tuple = dict_find(iterator, MESSAGE_KEY_DATA_POSITION);
+      int points = points_tuple ? points_tuple->value->int32 : 0;
+      int position = position_tuple ? position_tuple->value->int32 : 0;
+
+      APP_LOG(APP_LOG_LEVEL_INFO, "Received driver %d: %s (%s) - %d pts, P%d",
+              index, name, code, points, position);
+
+      if (s_driver_standings_data_callback) {
+        s_driver_standings_data_callback(index, name, code, points, position);
+      }
+    }
+    break;
+
+  case REQUEST_TYPE_GET_TEAM_STANDINGS:
+    if (count_tuple) {
+      // This is the count message
+      int count = count_tuple->value->int32;
+      APP_LOG(APP_LOG_LEVEL_INFO, "Received team standings count: %d", count);
+      if (s_team_standings_complete_callback) {
+        s_team_standings_complete_callback(count);
+      }
+    } else if (index_tuple && title_tuple) {
+      // This is a data message
+      int index = index_tuple->value->int32;
+      const char *name = title_tuple->value->cstring;
+
+      // Read points and position
+      Tuple *points_tuple = dict_find(iterator, MESSAGE_KEY_DATA_POINTS);
+      Tuple *position_tuple = dict_find(iterator, MESSAGE_KEY_DATA_POSITION);
+      int points = points_tuple ? points_tuple->value->int32 : 0;
+      int position = position_tuple ? position_tuple->value->int32 : 0;
+
+      APP_LOG(APP_LOG_LEVEL_INFO, "Received team %d: %s - %d pts, P%d",
+              index, name, points, position);
+
+      if (s_team_standings_data_callback) {
+        s_team_standings_data_callback(index, name, points, position);
       }
     }
     break;
@@ -168,4 +229,59 @@ void message_handler_set_race_details_callbacks(
     RaceDetailsDataCallback data_cb, RaceDetailsCompleteCallback complete_cb) {
   s_race_details_data_callback = data_cb;
   s_race_details_complete_callback = complete_cb;
+}
+
+void message_handler_request_driver_standings(void) {
+  DictionaryIterator *iter;
+  AppMessageResult result = app_message_outbox_begin(&iter);
+
+  if (result == APP_MSG_OK) {
+    dict_write_uint8(iter, MESSAGE_KEY_REQUEST_TYPE,
+                     REQUEST_TYPE_GET_DRIVER_STANDINGS);
+    result = app_message_outbox_send();
+
+    if (result == APP_MSG_OK) {
+      APP_LOG(APP_LOG_LEVEL_INFO, "Requested driver standings");
+    } else {
+      APP_LOG(APP_LOG_LEVEL_ERROR,
+              "Failed to send driver standings request: %d", (int)result);
+    }
+  } else {
+    APP_LOG(APP_LOG_LEVEL_ERROR,
+            "Failed to begin driver standings request: %d", (int)result);
+  }
+}
+
+void message_handler_request_team_standings(void) {
+  DictionaryIterator *iter;
+  AppMessageResult result = app_message_outbox_begin(&iter);
+
+  if (result == APP_MSG_OK) {
+    dict_write_uint8(iter, MESSAGE_KEY_REQUEST_TYPE,
+                     REQUEST_TYPE_GET_TEAM_STANDINGS);
+    result = app_message_outbox_send();
+
+    if (result == APP_MSG_OK) {
+      APP_LOG(APP_LOG_LEVEL_INFO, "Requested team standings");
+    } else {
+      APP_LOG(APP_LOG_LEVEL_ERROR, "Failed to send team standings request: %d",
+              (int)result);
+    }
+  } else {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Failed to begin team standings request: %d",
+            (int)result);
+  }
+}
+
+void message_handler_set_driver_standings_callbacks(
+    DriverStandingsDataCallback data_cb,
+    DriverStandingsCompleteCallback complete_cb) {
+  s_driver_standings_data_callback = data_cb;
+  s_driver_standings_complete_callback = complete_cb;
+}
+
+void message_handler_set_team_standings_callbacks(
+    TeamStandingsDataCallback data_cb, TeamStandingsCompleteCallback complete_cb) {
+  s_team_standings_data_callback = data_cb;
+  s_team_standings_complete_callback = complete_cb;
 }

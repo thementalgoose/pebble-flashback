@@ -1,6 +1,8 @@
 #include "home_window.h"
 #include "../data_models.h"
 #include "calendar_window.h"
+#include "driver_standings_window.h"
+#include "team_standings_window.h"
 #include <pebble.h>
 
 // Current season (will be set to current year)
@@ -11,9 +13,12 @@ static MenuLayer *s_menu_layer;
 static char s_season_text[16];
 
 // Menu icons
-static GBitmap *s_icon_calendar;
-static GBitmap *s_icon_helmet;
-static GBitmap *s_icon_trophy;
+static GBitmap *s_icon_calendar_light;
+static GBitmap *s_icon_helmet_light;
+static GBitmap *s_icon_trophy_light;
+static GBitmap *s_icon_calendar_dark;
+static GBitmap *s_icon_helmet_dark;
+static GBitmap *s_icon_trophy_dark;
 
 // Menu items
 #define MENU_ITEM_CALENDAR 0
@@ -24,22 +29,59 @@ static GBitmap *s_icon_trophy;
 // Menu layer callbacks
 static uint16_t get_num_rows_callback(MenuLayer *menu_layer,
                                       uint16_t section_index, void *context) {
-  return 1; // NUM_MENU_ITEMS;
+  return NUM_MENU_ITEMS;
 }
 
 static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
                               MenuIndex *cell_index, void *context) {
+  // Check if this row is selected
+  bool selected = menu_layer_is_index_selected(s_menu_layer, cell_index);
+
+  // Set text color based on selection
+  GColor text_color = selected ? GColorWhite : GColorBlack;
+
+  // Get the icon and title for this row
+  GBitmap *icon = NULL;
+  const char *title = NULL;
+
   switch (cell_index->row) {
   case MENU_ITEM_CALENDAR:
-    menu_cell_basic_draw(ctx, cell_layer, "Calendar", NULL, s_icon_calendar);
+    icon = selected ? s_icon_calendar_light : s_icon_calendar_dark;
+    title = "Calendar";
     break;
-  // case MENU_ITEM_DRIVER_STANDINGS:
-  //   menu_cell_basic_draw(ctx, cell_layer, "Driver Standings", NULL, s_icon_helmet);
-  //   break;
-  // case MENU_ITEM_TEAM_STANDINGS:
-  //   menu_cell_basic_draw(ctx, cell_layer, "Team Standings", NULL, s_icon_trophy);
-  //   break;
+  case MENU_ITEM_DRIVER_STANDINGS:
+    icon = selected ? s_icon_helmet_light : s_icon_helmet_dark;
+    title = "Driver Standings";
+    break;
+  case MENU_ITEM_TEAM_STANDINGS:
+    icon = selected ? s_icon_trophy_light : s_icon_trophy_dark;
+    title = "Team Standings";
+    break;
   }
+
+  // Draw the cell with custom icon compositing
+  GRect bounds = layer_get_bounds(cell_layer);
+
+  // Draw the icon with proper compositing mode to match text color
+  if (icon) {
+    GRect icon_bounds = gbitmap_get_bounds(icon);
+    GRect icon_rect = GRect(2, (bounds.size.h - icon_bounds.size.h) / 2,
+                           icon_bounds.size.w, icon_bounds.size.h);
+
+    graphics_context_set_compositing_mode(ctx, GCompOpSet);
+    graphics_context_set_text_color(ctx, text_color);
+    graphics_draw_bitmap_in_rect(ctx, icon, icon_rect);
+  }
+
+  // Draw the text
+  GRect text_rect = GRect(32, (bounds.size.h - 32) / 2, bounds.size.w - 32 - 4, 28);
+  graphics_context_set_text_color(ctx, text_color);
+  graphics_draw_text(ctx, title,
+                    fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD),
+                    text_rect,
+                    GTextOverflowModeTrailingEllipsis,
+                    GTextAlignmentLeft,
+                    NULL);
 }
 
 static int16_t get_cell_height_callback(struct MenuLayer *menu_layer,
@@ -55,12 +97,12 @@ static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
     calendar_window_push();
     break;
   case MENU_ITEM_DRIVER_STANDINGS:
-    APP_LOG(APP_LOG_LEVEL_INFO, "Driver Standings selected (not implemented)");
-    // TODO: Push driver standings window
+    APP_LOG(APP_LOG_LEVEL_INFO, "Driver Standings selected");
+    driver_standings_window_push();
     break;
   case MENU_ITEM_TEAM_STANDINGS:
-    APP_LOG(APP_LOG_LEVEL_INFO, "Team Standings selected (not implemented)");
-    // TODO: Push team standings window
+    APP_LOG(APP_LOG_LEVEL_INFO, "Team Standings selected");
+    team_standings_window_push();
     break;
   }
 }
@@ -88,9 +130,12 @@ static void window_load(Window *window) {
   GRect bounds = layer_get_bounds(window_layer);
 
   // Load menu icons
-  s_icon_calendar = gbitmap_create_with_resource(RESOURCE_ID_ICON_CALENDAR);
-  s_icon_helmet = gbitmap_create_with_resource(RESOURCE_ID_ICON_HELMET);
-  s_icon_trophy = gbitmap_create_with_resource(RESOURCE_ID_ICON_TROPHY);
+  s_icon_calendar_light = gbitmap_create_with_resource(RESOURCE_ID_ICON_CALENDAR_LIGHT);
+  s_icon_helmet_light = gbitmap_create_with_resource(RESOURCE_ID_ICON_HELMET_LIGHT);
+  s_icon_trophy_light = gbitmap_create_with_resource(RESOURCE_ID_ICON_TROPHY_LIGHT);
+  s_icon_calendar_dark = gbitmap_create_with_resource(RESOURCE_ID_ICON_CALENDAR_DARK);
+  s_icon_helmet_dark = gbitmap_create_with_resource(RESOURCE_ID_ICON_HELMET_DARK);
+  s_icon_trophy_dark = gbitmap_create_with_resource(RESOURCE_ID_ICON_TROPHY_DARK);
 
   // Create menu layer (full screen, no status bar)
   s_menu_layer = menu_layer_create(bounds);
@@ -118,9 +163,12 @@ static void window_unload(Window *window) {
   menu_layer_destroy(s_menu_layer);
 
   // Destroy menu icons
-  gbitmap_destroy(s_icon_calendar);
-  gbitmap_destroy(s_icon_helmet);
-  gbitmap_destroy(s_icon_trophy);
+  gbitmap_destroy(s_icon_calendar_light);
+  gbitmap_destroy(s_icon_helmet_light);
+  gbitmap_destroy(s_icon_trophy_light);
+  gbitmap_destroy(s_icon_calendar_dark);
+  gbitmap_destroy(s_icon_helmet_dark);
+  gbitmap_destroy(s_icon_trophy_dark);
 }
 
 void home_window_push(void) {

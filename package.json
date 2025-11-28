@@ -30,24 +30,41 @@
       "DATA_TITLE",
       "DATA_SUBTITLE",
       "DATA_EXTRA",
-      "DATA_ROUND"
+      "DATA_ROUND",
+      "DATA_POINTS",
+      "DATA_POSITION"
     ],
     "resources": {
       "media": [
         {
           "type": "bitmap",
-          "name": "ICON_CALENDAR",
-          "file": "images/icon_calendar.png"
+          "name": "ICON_CALENDAR_LIGHT",
+          "file": "images/icon_calendar_light.png"
         },
         {
           "type": "bitmap",
-          "name": "ICON_HELMET",
-          "file": "images/icon_helmet.png"
+          "name": "ICON_HELMET_LIGHT",
+          "file": "images/icon_helmet_light.png"
         },
         {
           "type": "bitmap",
-          "name": "ICON_TROPHY",
-          "file": "images/icon_trophy.png"
+          "name": "ICON_TROPHY_LIGHT",
+          "file": "images/icon_trophy_light.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "ICON_CALENDAR_DARK",
+          "file": "images/icon_calendar_dark.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "ICON_HELMET_DARK",
+          "file": "images/icon_helmet_dark.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "ICON_TROPHY_DARK",
+          "file": "images/icon_trophy_dark.png"
         }
       ]
     }
