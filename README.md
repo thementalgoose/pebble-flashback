@@ -1,19 +1,19 @@
 <table align="center">
   <tr>
+    <th>Pebble Classic</th>
+    <th>Pebble Time</th>
+    <th>Pebble Time Round</th>
+    <th>Pebble 2</th>
+    <th>Pebble 2 Duo</th>
+    <th>Pebble Time</th>
+  </tr>
+  <tr>
     <th>aplite</th>
     <th>basalt</th>
     <th>chalk</th>
     <th>diorite</th>
     <th>emery</th>
     <th>flint</th>
-  </tr>
-  <tr>
-    <th>Pebble Classic</th>
-    <th>Pebble Time</th>
-    <th>Pebble Time Round</th>
-    <th>Pebble 2</th>
-    <th>Pebble 2 Duo</th>
-    <th>Pebble Time 2</th>
   </tr>
   <tr>
     <td><img src="appstore/aplite/menu.png" width="140" /></td>
