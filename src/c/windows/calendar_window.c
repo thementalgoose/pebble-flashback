@@ -136,7 +136,44 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
   }
 
   if (race) {
-    menu_cell_basic_draw(ctx, cell_layer, race->name, race->location, NULL);
+    // Get bounds and calculate positions
+    GRect bounds = layer_get_bounds(cell_layer);
+
+    // Check if this cell is selected to invert text color
+    bool selected = menu_layer_is_index_selected(s_menu_layer, cell_index);
+    GColor text_color = selected ? GColorWhite : GColorBlack;
+
+    // Draw round number in icon position (left side)
+    char round_text[4];
+    snprintf(round_text, sizeof(round_text), "%d", race->round);
+
+    GRect round_rect = GRect(4, 4, 28, bounds.size.h - 8);
+    graphics_context_set_text_color(ctx, text_color);
+    graphics_draw_text(ctx, round_text,
+                      fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD),
+                      round_rect,
+                      GTextOverflowModeTrailingEllipsis,
+                      GTextAlignmentCenter,
+                      NULL);
+
+    // Draw race name and location with offset for round number
+    const int text_offset_x = 36;
+    GRect title_rect = GRect(text_offset_x, 2, bounds.size.w - text_offset_x - 4, 20);
+    GRect subtitle_rect = GRect(text_offset_x, 22, bounds.size.w - text_offset_x - 4, 18);
+
+    graphics_draw_text(ctx, race->name,
+                      fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
+                      title_rect,
+                      GTextOverflowModeTrailingEllipsis,
+                      GTextAlignmentLeft,
+                      NULL);
+
+    graphics_draw_text(ctx, race->location,
+                      fonts_get_system_font(FONT_KEY_GOTHIC_14),
+                      subtitle_rect,
+                      GTextOverflowModeTrailingEllipsis,
+                      GTextAlignmentLeft,
+                      NULL);
   } else {
     menu_cell_basic_draw(ctx, cell_layer, "No races", NULL, NULL);
   }
