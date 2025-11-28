@@ -158,6 +158,11 @@ static void window_load(Window *window) {
   s_menu_layer = menu_layer_create(bounds);
   menu_layer_set_click_config_onto_window(s_menu_layer, window);
 
+  // Set custom color highlight on color displays
+#ifdef PBL_COLOR
+  menu_layer_set_highlight_colors(s_menu_layer, GColorFromHEX(0x75b0bf), GColorWhite);
+#endif
+
   // Set callbacks
   menu_layer_set_callbacks(s_menu_layer, NULL,
                            (MenuLayerCallbacks){
