@@ -29,7 +29,8 @@
       "DATA_COUNT",
       "DATA_TITLE",
       "DATA_SUBTITLE",
-      "DATA_EXTRA"
+      "DATA_EXTRA",
+      "DATA_ROUND"
     ],
     "resources": {
       "media": [

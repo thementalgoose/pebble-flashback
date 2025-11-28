@@ -42,10 +42,14 @@ static void inbox_received_callback(DictionaryIterator *iterator,
       const char *subtitle = subtitle_tuple->value->cstring;
       const char *extra = extra_tuple ? extra_tuple->value->cstring : "";
 
-      APP_LOG(APP_LOG_LEVEL_INFO, "Received race %d: %s", index, title);
+      // Read round number
+      Tuple *round_tuple = dict_find(iterator, MESSAGE_KEY_DATA_ROUND);
+      int round = round_tuple ? round_tuple->value->int32 : 0;
+
+      APP_LOG(APP_LOG_LEVEL_INFO, "Received race %d: %s (round %d)", index, title, round);
 
       if (s_overview_data_callback) {
-        s_overview_data_callback(index, title, subtitle, extra);
+        s_overview_data_callback(index, title, subtitle, extra, round);
       }
     }
     break;

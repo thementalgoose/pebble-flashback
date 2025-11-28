@@ -24,13 +24,15 @@ static bool s_data_loaded = false;
 
 // Callbacks from message handler
 static void on_race_data_received(int index, const char *title,
-                                  const char *subtitle, const char *extra) {
+                                  const char *subtitle, const char *extra,
+                                  int round) {
   if (index >= 0 && index < MAX_RACES) {
     snprintf(s_races[index].name, sizeof(s_races[index].name), "%s", title);
     snprintf(s_races[index].location, sizeof(s_races[index].location), "%s",
              subtitle);
     snprintf(s_races[index].date, sizeof(s_races[index].date), "%s", extra);
     s_races[index].index = index;
+    s_races[index].round = round;
 
     // Update section counts based on date
     int comparison = utils_compare_date_with_now(extra);
@@ -182,8 +184,9 @@ static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
   }
 
   if (selected_index >= 0) {
-    APP_LOG(APP_LOG_LEVEL_INFO, "Selected race index: %d", selected_index);
-    race_window_push(selected_index, s_races[selected_index].name);
+    int round = s_races[selected_index].round;
+    APP_LOG(APP_LOG_LEVEL_INFO, "Selected race index: %d, round: %d", selected_index, round);
+    race_window_push(round, s_races[selected_index].name);
   }
 }
 

@@ -13,6 +13,7 @@ typedef struct {
   char location[MAX_SUBTITLE_LENGTH];
   char date[MAX_EXTRA_LENGTH]; // ISO format date
   int index;
+  int round; // Round number in the season (1-24)
 } Race;
 
 typedef struct {

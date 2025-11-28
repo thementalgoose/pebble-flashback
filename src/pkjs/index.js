@@ -172,7 +172,8 @@ function sendRacesToWatch(overviewData) {
             [messageKeys.DATA_INDEX]: index,
             [messageKeys.DATA_TITLE]: race.name,
             [messageKeys.DATA_SUBTITLE]: race.circuit.city + ', ' + race.circuit.country,
-            [messageKeys.DATA_EXTRA]: race.date // Race date for sorting
+            [messageKeys.DATA_EXTRA]: race.date, // Race date for sorting
+            [messageKeys.DATA_ROUND]: race.round // Round number (1-24)
         };
 
         // Add small delay between messages to avoid overwhelming the watch
@@ -190,23 +191,23 @@ function sendRacesToWatch(overviewData) {
 }
 
 // Process race details and send events to watch
-function sendRaceDetailsToWatch(overviewData, raceIndex) {
+function sendRaceDetailsToWatch(overviewData, raceRound) {
     if (!overviewData || !overviewData.data) {
         console.error('Invalid overview data');
         return;
     }
 
-    const races = Object.values(overviewData.data).sort((a, b) => a.round - b.round);
+    // Find the race with the matching round number
+    const race = Object.values(overviewData.data).find(r => r.round === raceRound);
 
-    if (raceIndex < 0 || raceIndex >= races.length) {
-        console.error('Invalid race index:', raceIndex);
+    if (!race) {
+        console.error('Race not found for round:', raceRound);
         return;
     }
 
-    const race = races[raceIndex];
     const events = race.schedule || [];
 
-    console.log(`Sending ${events.length} events for ${race.name}`);
+    console.log(`Sending ${events.length} events for ${race.name} (round ${raceRound})`);
 
     // Send count first
     Pebble.sendAppMessage({
@@ -267,9 +268,10 @@ Pebble.addEventListener('appmessage', function (e) {
 
         case REQUEST_TYPES.GET_RACE_DETAILS:
             console.log('Request: GET_RACE_DETAILS');
-            const raceIndex = payload[messageKeys.DATA_INDEX];
+            const raceRound = payload[messageKeys.DATA_INDEX];
+            console.log('Race round:', raceRound);
             fetchOverview(season)
-                .then(data => sendRaceDetailsToWatch(data, raceIndex))
+                .then(data => sendRaceDetailsToWatch(data, raceRound))
                 .catch(error => console.error('Failed to get race details:', error));
             break;
 

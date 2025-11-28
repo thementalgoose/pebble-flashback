@@ -12,7 +12,8 @@ typedef enum {
 
 // Callback types for different data
 typedef void (*OverviewDataCallback)(int index, const char *title,
-                                     const char *subtitle, const char *extra);
+                                     const char *subtitle, const char *extra,
+                                     int round);
 typedef void (*OverviewCompleteCallback)(int count);
 typedef void (*RaceDetailsDataCallback)(int index, const char *title,
                                         const char *subtitle,
