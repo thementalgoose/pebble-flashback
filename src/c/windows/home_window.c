@@ -15,11 +15,11 @@ static char s_season_text[16];
 
 // Menu icons
 static GBitmap *s_icon_calendar_light;
-static GBitmap *s_icon_helmet_light;
-static GBitmap *s_icon_trophy_light;
+static GBitmap *s_icon_drivers_light;
+static GBitmap *s_icon_teams_light;
 static GBitmap *s_icon_calendar_dark;
-static GBitmap *s_icon_helmet_dark;
-static GBitmap *s_icon_trophy_dark;
+static GBitmap *s_icon_drivers_dark;
+static GBitmap *s_icon_teams_dark;
 
 // Menu items
 #define MENU_ITEM_CALENDAR 0
@@ -60,11 +60,11 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     title = "Calendar";
     break;
   case MENU_ITEM_DRIVER_STANDINGS:
-    icon = selected ? s_icon_helmet_light : s_icon_helmet_dark;
+    icon = selected ? s_icon_drivers_light : s_icon_drivers_dark;
     title = "Driver Standings";
     break;
   case MENU_ITEM_TEAM_STANDINGS:
-    icon = selected ? s_icon_trophy_light : s_icon_trophy_dark;
+    icon = selected ? s_icon_teams_light : s_icon_teams_dark;
     title = "Team Standings";
     break;
   }
@@ -147,11 +147,11 @@ static void window_load(Window *window) {
 
   // Load menu icons
   s_icon_calendar_light = gbitmap_create_with_resource(RESOURCE_ID_ICON_CALENDAR_LIGHT);
-  s_icon_helmet_light = gbitmap_create_with_resource(RESOURCE_ID_ICON_HELMET_LIGHT);
-  s_icon_trophy_light = gbitmap_create_with_resource(RESOURCE_ID_ICON_TROPHY_LIGHT);
+  s_icon_drivers_light = gbitmap_create_with_resource(RESOURCE_ID_ICON_DRIVERS_LIGHT);
+  s_icon_teams_light = gbitmap_create_with_resource(RESOURCE_ID_ICON_TEAMS_LIGHT);
   s_icon_calendar_dark = gbitmap_create_with_resource(RESOURCE_ID_ICON_CALENDAR_DARK);
-  s_icon_helmet_dark = gbitmap_create_with_resource(RESOURCE_ID_ICON_HELMET_DARK);
-  s_icon_trophy_dark = gbitmap_create_with_resource(RESOURCE_ID_ICON_TROPHY_DARK);
+  s_icon_drivers_dark = gbitmap_create_with_resource(RESOURCE_ID_ICON_DRIVERS_DARK);
+  s_icon_teams_dark = gbitmap_create_with_resource(RESOURCE_ID_ICON_TEAMS_DARK);
 
   // Create menu layer (full screen, no status bar)
   s_menu_layer = menu_layer_create(bounds);
@@ -185,11 +185,11 @@ static void window_unload(Window *window) {
 
   // Destroy menu icons
   gbitmap_destroy(s_icon_calendar_light);
-  gbitmap_destroy(s_icon_helmet_light);
-  gbitmap_destroy(s_icon_trophy_light);
+  gbitmap_destroy(s_icon_drivers_light);
+  gbitmap_destroy(s_icon_teams_light);
   gbitmap_destroy(s_icon_calendar_dark);
-  gbitmap_destroy(s_icon_helmet_dark);
-  gbitmap_destroy(s_icon_trophy_dark);
+  gbitmap_destroy(s_icon_drivers_dark);
+  gbitmap_destroy(s_icon_teams_dark);
 }
 
 void home_window_push(void) {

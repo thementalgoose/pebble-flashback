@@ -7,9 +7,11 @@
   #define TEXT_COLOR_UNSELECTED GColorBlack
   #define TEXT_COLOR_SELECTED GColorBlack
   #define HIGHLIGHT_BG GColorFromHEX(0x489bb0)
+  #define SELECTED_ICON_LIGHT true
 #else
   #define TEXT_COLOR_UNSELECTED GColorBlack
   #define TEXT_COLOR_SELECTED GColorWhite
   #define HIGHLIGHT_BG GColorFromHEX(0x000000)
+  #define SELECTED_ICON_LIGHT true
 #endif
 
