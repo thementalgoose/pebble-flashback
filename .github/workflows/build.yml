@@ -21,6 +21,13 @@ jobs:
             rebble/pebble-sdk \
             pebble build
 
+      - name: List build output
+        run: |
+          echo "Contents of build directory:"
+          ls -la build/ || echo "build directory not found"
+          echo "Looking for .pbw files:"
+          find . -name "*.pbw" || echo "No .pbw files found"
+
       - name: Verify build output
         run: |
           if [ -f build/*.pbw ]; then
