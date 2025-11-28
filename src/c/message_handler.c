@@ -162,8 +162,9 @@ static void outbox_failed_callback(DictionaryIterator *iterator,
 }
 
 void message_handler_init(void) {
-  // Open AppMessage with appropriate buffer sizes
-  app_message_open(512, 512);
+  // Open AppMessage with larger buffer sizes for real device compatibility
+  // Inbox: receive from phone, Outbox: send to phone
+  app_message_open(2048, 256);
 
   // Register callbacks
   app_message_register_inbox_received(inbox_received_callback);

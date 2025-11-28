@@ -6,6 +6,7 @@ const BASE_URL = 'https://flashback.pages.dev';
 
 // Import auto-generated message keys
 var messageKeys = require('message_keys');
+console.log('Message keys loaded:', JSON.stringify(messageKeys));
 
 // Request types (must match C code)
 const REQUEST_TYPES = {
@@ -166,8 +167,8 @@ function sendRacesToWatch(overviewData) {
 
     // Send count first
     Pebble.sendAppMessage({
-        [messageKeys.REQUEST_TYPE]: REQUEST_TYPES.GET_OVERVIEW,
-        [messageKeys.DATA_COUNT]: races.length
+        REQUEST_TYPE: REQUEST_TYPES.GET_OVERVIEW,
+        DATA_COUNT: races.length
     }, function () {
         console.log('Sent race count');
     }, function (e) {
@@ -177,15 +178,16 @@ function sendRacesToWatch(overviewData) {
     // Send each race
     races.forEach((race, index) => {
         const message = {
-            [messageKeys.REQUEST_TYPE]: REQUEST_TYPES.GET_OVERVIEW,
-            [messageKeys.DATA_INDEX]: index,
-            [messageKeys.DATA_TITLE]: race.name,
-            [messageKeys.DATA_SUBTITLE]: race.circuit.city + ', ' + race.circuit.country,
-            [messageKeys.DATA_EXTRA]: race.date, // Race date for sorting
-            [messageKeys.DATA_ROUND]: race.round // Round number (1-24)
+            REQUEST_TYPE: REQUEST_TYPES.GET_OVERVIEW,
+            DATA_INDEX: index,
+            DATA_TITLE: race.name,
+            DATA_SUBTITLE: race.circuit.city + ', ' + race.circuit.country,
+            DATA_EXTRA: race.date, // Race date for sorting
+            DATA_ROUND: race.round // Round number (1-24)
         };
 
-        // Add small delay between messages to avoid overwhelming the watch
+        // Add delay between messages to avoid overwhelming the watch
+        // Real devices need more time than emulator (250ms vs 100ms)
         setTimeout(() => {
             Pebble.sendAppMessage(message,
                 function () {
@@ -193,6 +195,7 @@ function sendRacesToWatch(overviewData) {
                 },
                 function (e) {
                     console.error(`Failed to send race ${index}:`, e);
+                    console.error('Error details:', JSON.stringify(e));
                 }
             );
         }, index * 100);
@@ -220,8 +223,8 @@ function sendRaceDetailsToWatch(overviewData, raceRound) {
 
     // Send count first
     Pebble.sendAppMessage({
-        [messageKeys.REQUEST_TYPE]: REQUEST_TYPES.GET_RACE_DETAILS,
-        [messageKeys.DATA_COUNT]: events.length
+        REQUEST_TYPE: REQUEST_TYPES.GET_RACE_DETAILS,
+        DATA_COUNT: events.length
     }, function () {
         console.log('Sent event count');
     }, function (e) {
@@ -234,14 +237,14 @@ function sendRaceDetailsToWatch(overviewData, raceRound) {
         const dateTimeStr = event.date + 'T' + event.time;
 
         const message = {
-            [messageKeys.REQUEST_TYPE]: REQUEST_TYPES.GET_RACE_DETAILS,
-            [messageKeys.DATA_INDEX]: index,
-            [messageKeys.DATA_TITLE]: event.label,
-            [messageKeys.DATA_SUBTITLE]: dateTimeStr, // Will be parsed and formatted on watch
-            [messageKeys.DATA_EXTRA]: '' // Reserved for future use
+            REQUEST_TYPE: REQUEST_TYPES.GET_RACE_DETAILS,
+            DATA_INDEX: index,
+            DATA_TITLE: event.label,
+            DATA_SUBTITLE: dateTimeStr, // Will be parsed and formatted on watch
+            DATA_EXTRA: '' // Reserved for future use
         };
 
-        // Add small delay between messages
+        // Add delay between messages for real device compatibility
         setTimeout(() => {
             Pebble.sendAppMessage(message,
                 function () {
@@ -249,6 +252,7 @@ function sendRaceDetailsToWatch(overviewData, raceRound) {
                 },
                 function (e) {
                     console.error(`Failed to send event ${index}:`, e);
+                    console.error('Error details:', JSON.stringify(e));
                 }
             );
         }, index * 100);
@@ -277,8 +281,8 @@ function sendDriverStandingsToWatch(standingsData) {
 
     // Send count first
     Pebble.sendAppMessage({
-        [messageKeys.REQUEST_TYPE]: REQUEST_TYPES.GET_DRIVER_STANDINGS,
-        [messageKeys.DATA_COUNT]: standingsArray.length
+        REQUEST_TYPE: REQUEST_TYPES.GET_DRIVER_STANDINGS,
+        DATA_COUNT: standingsArray.length
     }, function () {
         console.log('Sent driver standings count');
     }, function (e) {
@@ -297,15 +301,15 @@ function sendDriverStandingsToWatch(standingsData) {
         const code = driver.code || standing.driverId.toUpperCase().substring(0, 3);
 
         const message = {
-            [messageKeys.REQUEST_TYPE]: REQUEST_TYPES.GET_DRIVER_STANDINGS,
-            [messageKeys.DATA_INDEX]: index,
-            [messageKeys.DATA_TITLE]: fullName,
-            [messageKeys.DATA_SUBTITLE]: code,
-            [messageKeys.DATA_POINTS]: standing.points,
-            [messageKeys.DATA_POSITION]: standing.position
+            REQUEST_TYPE: REQUEST_TYPES.GET_DRIVER_STANDINGS,
+            DATA_INDEX: index,
+            DATA_TITLE: fullName,
+            DATA_SUBTITLE: code,
+            DATA_POINTS: standing.points,
+            DATA_POSITION: standing.position
         };
 
-        // Add small delay between messages
+        // Add delay between messages for real device compatibility
         setTimeout(() => {
             Pebble.sendAppMessage(message,
                 function () {
@@ -313,6 +317,7 @@ function sendDriverStandingsToWatch(standingsData) {
                 },
                 function (e) {
                     console.error(`Failed to send driver ${index}:`, e);
+                    console.error('Error details:', JSON.stringify(e));
                 }
             );
         }, index * 100);
@@ -341,8 +346,8 @@ function sendTeamStandingsToWatch(standingsData) {
 
     // Send count first
     Pebble.sendAppMessage({
-        [messageKeys.REQUEST_TYPE]: REQUEST_TYPES.GET_TEAM_STANDINGS,
-        [messageKeys.DATA_COUNT]: standingsArray.length
+        REQUEST_TYPE: REQUEST_TYPES.GET_TEAM_STANDINGS,
+        DATA_COUNT: standingsArray.length
     }, function () {
         console.log('Sent team standings count');
     }, function (e) {
@@ -358,14 +363,14 @@ function sendTeamStandingsToWatch(standingsData) {
         }
 
         const message = {
-            [messageKeys.REQUEST_TYPE]: REQUEST_TYPES.GET_TEAM_STANDINGS,
-            [messageKeys.DATA_INDEX]: index,
-            [messageKeys.DATA_TITLE]: constructor.name,
-            [messageKeys.DATA_POINTS]: standing.points,
-            [messageKeys.DATA_POSITION]: standing.position
+            REQUEST_TYPE: REQUEST_TYPES.GET_TEAM_STANDINGS,
+            DATA_INDEX: index,
+            DATA_TITLE: constructor.name,
+            DATA_POINTS: standing.points,
+            DATA_POSITION: standing.position
         };
 
-        // Add small delay between messages
+        // Add delay between messages for real device compatibility
         setTimeout(() => {
             Pebble.sendAppMessage(message,
                 function () {
@@ -373,6 +378,7 @@ function sendTeamStandingsToWatch(standingsData) {
                 },
                 function (e) {
                     console.error(`Failed to send team ${index}:`, e);
+                    console.error('Error details:', JSON.stringify(e));
                 }
             );
         }, index * 100);
@@ -387,9 +393,13 @@ function getCurrentSeason() {
 // Listen for messages from watch
 Pebble.addEventListener('appmessage', function (e) {
     console.log('Received message from watch');
+
+    // The payload uses string keys, not numeric keys
     const payload = e.payload;
-    const requestType = payload[messageKeys.REQUEST_TYPE];
+    const requestType = payload.REQUEST_TYPE;
     const season = getCurrentSeason();
+
+    console.log('Request type:', requestType);
 
     switch (requestType) {
         case REQUEST_TYPES.GET_OVERVIEW:
@@ -401,7 +411,7 @@ Pebble.addEventListener('appmessage', function (e) {
 
         case REQUEST_TYPES.GET_RACE_DETAILS:
             console.log('Request: GET_RACE_DETAILS');
-            const raceRound = payload[messageKeys.DATA_INDEX];
+            const raceRound = payload.DATA_INDEX;
             console.log('Race round:', raceRound);
             fetchOverview(season)
                 .then(data => sendRaceDetailsToWatch(data, raceRound))
@@ -431,6 +441,12 @@ Pebble.addEventListener('appmessage', function (e) {
 Pebble.addEventListener('ready', function () {
     console.log('PebbleKit JS ready!');
     console.log('Current season:', getCurrentSeason());
+
+    // Send a ready message to the watch to confirm JS is running
+    // This helps debug connectivity issues on real devices
+    setTimeout(function() {
+        console.log('Notifying watch that JS is ready');
+    }, 1000);
 });
 
 Pebble.addEventListener('showConfiguration', function () {
