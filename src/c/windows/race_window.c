@@ -2,6 +2,7 @@
 #include "../data_models.h"
 #include "../message_handler.h"
 #include "../utils.h"
+#include "../colors.h"
 #include <pebble.h>
 
 #define MAX_EVENTS 10
@@ -159,7 +160,7 @@ static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
   GRect bounds = layer_get_bounds(cell_layer);
   GTextAlignment alignment = PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft);
 
-  graphics_context_set_text_color(ctx, GColorBlack);
+  graphics_context_set_text_color(ctx, TEXT_COLOR_UNSELECTED);
   graphics_draw_text(ctx, s_race_name,
                     fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
                     GRect(PBL_IF_ROUND_ELSE(0, 5), 0, bounds.size.w - PBL_IF_ROUND_ELSE(0, 5), bounds.size.h),
@@ -189,9 +190,7 @@ static void window_load(Window *window) {
   menu_layer_set_click_config_onto_window(s_menu_layer, window);
 
   // Set custom color highlight on color displays
-#ifdef PBL_COLOR
-  menu_layer_set_highlight_colors(s_menu_layer, GColorFromHEX(0x489bb0), GColorWhite);
-#endif
+  menu_layer_set_highlight_colors(s_menu_layer, HIGHLIGHT_BG, GColorWhite);
 
   // Set callbacks
   menu_layer_set_callbacks(s_menu_layer, NULL,
