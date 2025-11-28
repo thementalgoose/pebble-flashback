@@ -39,19 +39,12 @@ jobs:
             rebble/pebble-sdk \
             pebble build
 
-      - name: List build output
-        run: |
-          echo "Contents of build directory:"
-          ls -la build/ || echo "build directory not found"
-          echo "Looking for .pbw files:"
-          find . -name "*.pbw" || echo "No .pbw files found"
-
       - name: Upload .pbw to release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: build/pebble-flashback.pbw
-          asset_name: pebble-flashback.pbw
+          asset_path: build/pebble.pbw
+          asset_name: pebble.pbw
           asset_content_type: application/octet-stream
