@@ -1,5 +1,7 @@
 #include "driver_standings_window.h"
+#include "flashback_screen.h"
 #include "../colors.h"
+#include "../ui_constants.h"
 #include "../data_models.h"
 #include "../message_handler.h"
 #include <pebble.h>
@@ -8,7 +10,7 @@
 
 static Window *s_window;
 static MenuLayer *s_menu_layer;
-static char s_header_text[32];
+static char s_subtitle_text[32];
 
 // Driver standings data storage
 static DriverStanding s_drivers[MAX_DRIVERS];
@@ -151,6 +153,43 @@ static uint16_t get_num_rows_callback(MenuLayer *menu_layer,
   return s_driver_count > 0 ? s_driver_count : 1;
 }
 
+// Helper function to format driver name as "M.Verstapp."
+static void format_driver_name(const char *full_name, char *output, size_t output_size) {
+  if (!full_name || !output || output_size < 4) return;
+
+  // Find the space between first and last name
+  const char *space = strchr(full_name, ' ');
+  if (!space) {
+    // No space found, just copy the name
+    strncpy(output, full_name, output_size - 1);
+    output[output_size - 1] = '\0';
+    return;
+  }
+
+  // Get first initial
+  char first_initial = full_name[0];
+
+  // Get last name (skip the space)
+  const char *last_name = space + 1;
+
+  // Format as "F.Lastname." (truncate if needed)
+  // Leave room for "F." + lastname + "." + null terminator
+  size_t max_last_len = output_size - 4; // Room for "F", ".", ".", "\0"
+
+  size_t pos = 0;
+  output[pos++] = first_initial;
+  output[pos++] = '.';
+
+  // Copy last name (truncate if necessary)
+  size_t copied = 0;
+  while (*last_name && copied < max_last_len && pos < output_size - 2) {
+    output[pos++] = *last_name++;
+    copied++;
+  }
+
+  output[pos] = '\0';
+}
+
 static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
                               MenuIndex *cell_index, void *context) {
   if (!s_data_loaded) {
@@ -161,131 +200,87 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
   if (cell_index->row < s_driver_count) {
     DriverStanding *driver = &s_drivers[cell_index->row];
 
-    // Get bounds and calculate positions
+    // Get bounds
     GRect bounds = layer_get_bounds(cell_layer);
 
-    // Check if this cell is selected to invert text color
+    // Check if this cell is selected
     bool selected = menu_layer_is_index_selected(s_menu_layer, cell_index);
 
-    // Draw custom color selection background on color displays
+    // Draw selection background (black for selected)
     if (selected) {
       graphics_context_set_fill_color(ctx, HIGHLIGHT_BG);
       graphics_fill_rect(ctx, bounds, 0, GCornerNone);
     }
 
     GColor text_color = selected ? TEXT_COLOR_SELECTED : TEXT_COLOR_UNSELECTED;
+    graphics_context_set_text_color(ctx, text_color);
 
-    // Draw position number on the left
+    // Format: "1  M.Verstapp.  321" (note extra space for single digits)
+    // Add space after single-digit positions to align names
+
+    // Draw position number in a fixed-width column (right-aligned so digits line up)
     char position_text[4];
     snprintf(position_text, sizeof(position_text), "%d", driver->position);
-
-    GRect position_rect = GRect(4, 4, 28, bounds.size.h - 8);
-    graphics_context_set_text_color(ctx, text_color);
+    GRect pos_rect = GRect(H_INSET, 2, MENU_ROW_POS_WIDTH, bounds.size.h - 4);
     graphics_draw_text(ctx, position_text,
-                      fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD),
-                      position_rect,
-                      GTextOverflowModeTrailingEllipsis,
-                      GTextAlignmentCenter,
-                      NULL);
-
-    // Draw driver name and points with offset for position number
-    const int text_offset_x = 36;
-    GRect name_rect = GRect(text_offset_x, 0, bounds.size.w - text_offset_x - 4, 22);
-
-    // Format points display
-    char points_text[32];
-    snprintf(points_text, sizeof(points_text), "%d pts", driver->points);
-    GRect points_rect = GRect(text_offset_x, 22, bounds.size.w - text_offset_x - 4, 20);
-
-    graphics_draw_text(ctx, driver->name,
-                      fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD),
-                      name_rect,
+                      MENU_ROW_FONT,
+                      pos_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
                       NULL);
 
+    // Draw name starting at a fixed offset after the position column
+    char abbreviated_name[16];
+    format_driver_name(driver->name, abbreviated_name, sizeof(abbreviated_name));
+    const int name_x = H_INSET + MENU_ROW_POS_WIDTH + MENU_ROW_POS_GAP;
+    GRect text_rect = GRect(name_x, 2, bounds.size.w - name_x - 46, bounds.size.h - 4);
+    graphics_draw_text(ctx, abbreviated_name,
+                      MENU_ROW_FONT,
+                      text_rect,
+                      GTextOverflowModeTrailingEllipsis,
+                      GTextAlignmentLeft,
+                      NULL);
+
+    // Draw points on right
+    char points_text[16];
+    snprintf(points_text, sizeof(points_text), "%d", driver->points);
+    GRect points_rect = GRect(bounds.size.w - 44 - H_INSET, 2, 42, bounds.size.h - 4);
     graphics_draw_text(ctx, points_text,
-                      fonts_get_system_font(FONT_KEY_GOTHIC_18),
+                      MENU_ROW_FONT,
                       points_rect,
                       GTextOverflowModeTrailingEllipsis,
-                      GTextAlignmentLeft,
+                      GTextAlignmentRight,
                       NULL);
   } else {
     menu_cell_basic_draw(ctx, cell_layer, "No drivers", NULL, NULL);
   }
 }
 
-static int16_t get_cell_height_callback(struct MenuLayer *menu_layer,
-                                        MenuIndex *cell_index, void *context) {
-  return 44;
-}
-
 static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
                                  uint16_t section_index, void *context) {
-  // Draw header centered on round displays
-  GRect bounds = layer_get_bounds(cell_layer);
-  GTextAlignment alignment = PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft);
-
-  graphics_context_set_text_color(ctx, TEXT_COLOR_UNSELECTED);
-  graphics_draw_text(ctx, s_header_text,
-                    fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
-                    GRect(PBL_IF_ROUND_ELSE(0, 5), 0, bounds.size.w - PBL_IF_ROUND_ELSE(0, 5), bounds.size.h),
-                    GTextOverflowModeTrailingEllipsis,
-                    alignment,
-                    NULL);
-}
-
-static int16_t get_header_height_callback(struct MenuLayer *menu_layer,
-                                          uint16_t section_index,
-                                          void *context) {
-  return MENU_CELL_BASIC_HEADER_HEIGHT;
-}
-
-static uint16_t get_num_sections_callback(struct MenuLayer *menu_layer,
-                                          void *context) {
-  return 1;
+  flashback_screen_draw_header(ctx, cell_layer, "Drivers", s_subtitle_text);
 }
 
 // Window lifecycle
 static void window_load(Window *window) {
-  Layer *window_layer = window_get_root_layer(window);
-  GRect bounds = layer_get_bounds(window_layer);
+  s_menu_layer = flashback_screen_create_menu_layer(window);
 
-  // Create menu layer (full screen, no status bar)
-  s_menu_layer = menu_layer_create(bounds);
-  menu_layer_set_click_config_onto_window(s_menu_layer, window);
-
-  // Set custom color highlight on color displays
-#ifdef PBL_COLOR
-  menu_layer_set_highlight_colors(s_menu_layer, GColorFromHEX(0x489bb0), GColorWhite);
-#endif
-
-  // Set callbacks
   menu_layer_set_callbacks(s_menu_layer, NULL,
                            (MenuLayerCallbacks){
-                               .get_num_sections = get_num_sections_callback,
+                               .get_num_sections = flashback_screen_num_sections_callback,
                                .get_num_rows = get_num_rows_callback,
                                .draw_row = draw_row_callback,
                                .draw_header = draw_header_callback,
-                               .get_header_height = get_header_height_callback,
-                               .get_cell_height = get_cell_height_callback,
+                               .get_header_height = flashback_screen_header_height_callback,
+                               .get_cell_height = flashback_screen_cell_height_callback,
                            });
 
-  layer_add_child(window_layer, menu_layer_get_layer(s_menu_layer));
+  snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d", g_current_season);
 
-  // Set header text
-  snprintf(s_header_text, sizeof(s_header_text), "%d Driver Standings", g_current_season);
-
-  // Request driver standings data if not loaded
   if (!s_data_loaded) {
-    // Set the legacy callbacks (for compatibility, though not used)
     message_handler_set_driver_standings_callbacks(on_driver_data_received,
                                                    on_driver_count_received);
-
-    // Register our custom inbox handler for the formatted text
     app_message_register_inbox_received(driver_standings_inbox_received);
-
-    // Request the data
     message_handler_request_driver_standings();
   }
 }

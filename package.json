@@ -6,23 +6,29 @@
     "pebble-app"
   ],
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "@rebble/clay": "*",
+    "pebble-api": "^0.2.2"
+  },
   "pebble": {
     "displayName": "Flashback",
     "uuid": "6d1b717e-1f10-4da6-94c1-3347d6bec79f",
     "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": [
-      "aplite",
       "basalt",
       "chalk",
       "diorite",
       "emery",
-      "flint"
+      "flint",
+      "gabbro"
     ],
     "watchapp": {
       "watchface": false
     },
+    "capabilities": [
+      "configurable"
+    ],
     "messageKeys": [
       "REQUEST_TYPE",
       "DATA_INDEX",
@@ -32,7 +38,8 @@
       "DATA_EXTRA",
       "DATA_ROUND",
       "DATA_POINTS",
-      "DATA_POSITION"
+      "DATA_POSITION",
+      "TIMELINE_PINS"
     ],
     "resources": {
       "media": [

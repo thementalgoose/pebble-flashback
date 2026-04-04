@@ -1,5 +1,7 @@
 #include "home_window.h"
+#include "flashback_screen.h"
 #include "../colors.h"
+#include "../ui_constants.h"
 #include "../data_models.h"
 #include "calendar_window.h"
 #include "driver_standings_window.h"
@@ -11,13 +13,13 @@ int g_current_season = 2025;
 
 static Window *s_window;
 static MenuLayer *s_menu_layer;
-static char s_season_text[16];
+static char s_subtitle_text[16];
 
 // Menu items
-#define MENU_ITEM_CALENDAR 0
+#define MENU_ITEM_CALENDAR         0
 #define MENU_ITEM_DRIVER_STANDINGS 1
-#define MENU_ITEM_TEAM_STANDINGS 2
-#define NUM_MENU_ITEMS 3
+#define MENU_ITEM_TEAM_STANDINGS   2
+#define NUM_MENU_ITEMS             3
 
 // Menu layer callbacks
 static uint16_t get_num_rows_callback(MenuLayer *menu_layer,
@@ -27,7 +29,6 @@ static uint16_t get_num_rows_callback(MenuLayer *menu_layer,
 
 static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
                               MenuIndex *cell_index, void *context) {
-  // Get the icon and title for this row
   const char *title = NULL;
 
   switch (cell_index->row) {
@@ -42,13 +43,22 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     break;
   }
 
-  // Use Pebble's built-in drawing which handles icon inversion automatically
-  menu_cell_basic_draw(ctx, cell_layer, title, NULL, NULL);
-}
+  GRect bounds = layer_get_bounds(cell_layer);
+  bool selected = menu_layer_is_index_selected(s_menu_layer, cell_index);
 
-static int16_t get_cell_height_callback(struct MenuLayer *menu_layer,
-                                        MenuIndex *cell_index, void *context) {
-  return 44; // Taller cells for easier touch
+  if (selected) {
+    graphics_context_set_fill_color(ctx, HIGHLIGHT_BG);
+    graphics_fill_rect(ctx, bounds, 0, GCornerNone);
+  }
+
+  graphics_context_set_text_color(ctx, selected ? TEXT_COLOR_SELECTED : TEXT_COLOR_UNSELECTED);
+  GRect text_rect = GRect(H_INSET, 2, bounds.size.w - 2 * H_INSET, bounds.size.h - 4);
+  graphics_draw_text(ctx, title,
+                    MENU_ROW_FONT,
+                    text_rect,
+                    GTextOverflowModeTrailingEllipsis,
+                    GTextAlignmentLeft,
+                    NULL);
 }
 
 static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
@@ -71,58 +81,25 @@ static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
 
 static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
                                  uint16_t section_index, void *context) {
-  // Draw season header centered on round displays
-  GRect bounds = layer_get_bounds(cell_layer);
-  GTextAlignment alignment =
-      PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft);
-
-  graphics_context_set_text_color(ctx, TEXT_COLOR_UNSELECTED);
-  graphics_draw_text(
-      ctx, s_season_text, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
-      GRect(PBL_IF_ROUND_ELSE(0, 5), 0, bounds.size.w - PBL_IF_ROUND_ELSE(0, 5),
-            bounds.size.h),
-      GTextOverflowModeTrailingEllipsis, alignment, NULL);
-}
-
-static int16_t get_header_height_callback(struct MenuLayer *menu_layer,
-                                          uint16_t section_index,
-                                          void *context) {
-  return MENU_CELL_BASIC_HEADER_HEIGHT;
-}
-
-static uint16_t get_num_sections_callback(struct MenuLayer *menu_layer,
-                                          void *context) {
-  return 1;
+  flashback_screen_draw_header(ctx, cell_layer, "Season", s_subtitle_text);
 }
 
 // Window lifecycle
 static void window_load(Window *window) {
-  Layer *window_layer = window_get_root_layer(window);
-  GRect bounds = layer_get_bounds(window_layer);
+  s_menu_layer = flashback_screen_create_menu_layer(window);
 
-  // Create menu layer (full screen, no status bar)
-  s_menu_layer = menu_layer_create(bounds);
-  menu_layer_set_click_config_onto_window(s_menu_layer, window);
-
-  // Set custom color highlight on color displays
-  menu_layer_set_highlight_colors(s_menu_layer, HIGHLIGHT_BG, GColorWhite);
-
-  // Set callbacks
   menu_layer_set_callbacks(s_menu_layer, NULL,
                            (MenuLayerCallbacks){
+                               .get_num_sections = flashback_screen_num_sections_callback,
                                .get_num_rows = get_num_rows_callback,
                                .draw_row = draw_row_callback,
-                               .get_cell_height = get_cell_height_callback,
+                               .get_cell_height = flashback_screen_cell_height_callback,
                                .select_click = select_callback,
                                .draw_header = draw_header_callback,
-                               .get_header_height = get_header_height_callback,
-                               .get_num_sections = get_num_sections_callback,
+                               .get_header_height = flashback_screen_header_height_callback,
                            });
 
-  layer_add_child(window_layer, menu_layer_get_layer(s_menu_layer));
-
-  // Set season text
-  snprintf(s_season_text, sizeof(s_season_text), "%d Season", g_current_season);
+  snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d", g_current_season);
 }
 
 static void window_unload(Window *window) {

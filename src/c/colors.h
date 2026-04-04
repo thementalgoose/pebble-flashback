@@ -6,12 +6,14 @@
 #ifdef PBL_COLOR
   #define TEXT_COLOR_UNSELECTED GColorBlack
   #define TEXT_COLOR_SELECTED GColorBlack
-  #define HIGHLIGHT_BG GColorFromHEX(0x489bb0)
+  #define DIVIDER_COLOR GColorLightGray
+  #define HIGHLIGHT_BG GColorTiffanyBlue
   #define SELECTED_ICON_LIGHT true
 #else
   #define TEXT_COLOR_UNSELECTED GColorBlack
   #define TEXT_COLOR_SELECTED GColorWhite
-  #define HIGHLIGHT_BG GColorFromHEX(0x000000)
+  #define DIVIDER_COLOR GColorLightGray
+  #define HIGHLIGHT_BG GColorBlack
   #define SELECTED_ICON_LIGHT true
 #endif
 
