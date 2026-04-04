@@ -18,8 +18,12 @@
 // ---------------------------------------------------------------------------
 // Menu layout
 // ---------------------------------------------------------------------------
-#define MENU_CELL_HEIGHT   28
-#define MENU_HEADER_HEIGHT 42
+#define MENU_CELL_HEIGHT    28
+#define MENU_HEADER_HEIGHT  42
+// Fixed width reserved for the position number column (fits "20" in GOTHIC_18_BOLD)
+#define MENU_ROW_POS_WIDTH  22
+// Gap between position column and name
+#define MENU_ROW_POS_GAP    4
 
 // Pixel rows within the header cell
 #define MENU_HEADER_DIVIDER_Y  20

@@ -161,16 +161,21 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     GColor text_color = selected ? TEXT_COLOR_SELECTED : TEXT_COLOR_UNSELECTED;
     graphics_context_set_text_color(ctx, text_color);
 
-    // "1  TeamName" (extra space for single-digit alignment)
-    char row_text[64];
-    if (team->position < 10) {
-      snprintf(row_text, sizeof(row_text), "%d  %s", team->position, team->name);
-    } else {
-      snprintf(row_text, sizeof(row_text), "%d %s", team->position, team->name);
-    }
+    // Draw position number in a fixed-width column (right-aligned so digits line up)
+    char position_text[4];
+    snprintf(position_text, sizeof(position_text), "%d", team->position);
+    GRect pos_rect = GRect(H_INSET, 2, MENU_ROW_POS_WIDTH, bounds.size.h - 4);
+    graphics_draw_text(ctx, position_text,
+                      fonts_get_system_font(MENU_ROW_FONT),
+                      pos_rect,
+                      GTextOverflowModeTrailingEllipsis,
+                      GTextAlignmentLeft,
+                      NULL);
 
-    GRect text_rect = GRect(H_INSET, 2, bounds.size.w - H_INSET - 46, bounds.size.h - 4);
-    graphics_draw_text(ctx, row_text,
+    // Draw name starting at a fixed offset after the position column
+    const int name_x = H_INSET + MENU_ROW_POS_WIDTH + MENU_ROW_POS_GAP;
+    GRect text_rect = GRect(name_x, 2, bounds.size.w - name_x - 46, bounds.size.h - 4);
+    graphics_draw_text(ctx, team->name,
                       fonts_get_system_font(MENU_ROW_FONT),
                       text_rect,
                       GTextOverflowModeTrailingEllipsis,

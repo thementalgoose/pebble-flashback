@@ -217,20 +217,23 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     // Format: "1  M.Verstapp.  321" (note extra space for single digits)
     // Add space after single-digit positions to align names
 
+    // Draw position number in a fixed-width column (right-aligned so digits line up)
+    char position_text[4];
+    snprintf(position_text, sizeof(position_text), "%d", driver->position);
+    GRect pos_rect = GRect(H_INSET, 2, MENU_ROW_POS_WIDTH, bounds.size.h - 4);
+    graphics_draw_text(ctx, position_text,
+                      fonts_get_system_font(MENU_ROW_FONT),
+                      pos_rect,
+                      GTextOverflowModeTrailingEllipsis,
+                      GTextAlignmentLeft,
+                      NULL);
+
+    // Draw name starting at a fixed offset after the position column
     char abbreviated_name[16];
     format_driver_name(driver->name, abbreviated_name, sizeof(abbreviated_name));
-
-    char row_text[64];
-    if (driver->position < 10) {
-      // Add extra space after single-digit position for alignment
-      snprintf(row_text, sizeof(row_text), "%d  %s", driver->position, abbreviated_name);
-    } else {
-      snprintf(row_text, sizeof(row_text), "%d %s", driver->position, abbreviated_name);
-    }
-
-    // Draw position and name on left using monospace-style font
-    GRect text_rect = GRect(H_INSET, 2, bounds.size.w - H_INSET - 46, bounds.size.h - 4);
-    graphics_draw_text(ctx, row_text,
+    const int name_x = H_INSET + MENU_ROW_POS_WIDTH + MENU_ROW_POS_GAP;
+    GRect text_rect = GRect(name_x, 2, bounds.size.w - name_x - 46, bounds.size.h - 4);
+    graphics_draw_text(ctx, abbreviated_name,
                       fonts_get_system_font(MENU_ROW_FONT),
                       text_rect,
                       GTextOverflowModeTrailingEllipsis,
