@@ -1,5 +1,6 @@
 #include "calendar_window.h"
 #include "../colors.h"
+#include "../ui_constants.h"
 #include "../data_models.h"
 #include "../message_handler.h"
 #include "../utils.h"
@@ -11,7 +12,7 @@
 
 static Window *s_window;
 static MenuLayer *s_menu_layer;
-static char s_header_text[16];
+static char s_subtitle_text[16];
 
 // Race data storage
 static Race s_upcoming_races[MAX_UPCOMING_RACES];
@@ -180,25 +181,53 @@ static uint16_t get_num_rows_callback(MenuLayer *menu_layer,
 
 static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
                                  uint16_t section_index, void *context) {
-  const char *header_text = (section_index == SECTION_UPCOMING) ? "Upcoming Races" : "Previous Races";
-
-  // Draw header centered on round displays
   GRect bounds = layer_get_bounds(cell_layer);
-  GTextAlignment alignment = PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft);
+  graphics_context_set_text_color(ctx, GColorBlack);
 
-  graphics_context_set_text_color(ctx, TEXT_COLOR_UNSELECTED);
-  graphics_draw_text(ctx, header_text,
-                    fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
-                    GRect(PBL_IF_ROUND_ELSE(0, 5), 0, bounds.size.w - PBL_IF_ROUND_ELSE(0, 5), bounds.size.h),
-                    GTextOverflowModeTrailingEllipsis,
-                    alignment,
-                    NULL);
+  if (section_index == SECTION_UPCOMING) {
+    // Full Flashback header for the first section
+    GRect title_rect = GRect(HDR_INSET, 0, bounds.size.w - 2 * HDR_INSET, MENU_HEADER_DIVIDER_Y);
+    graphics_draw_text(ctx, APP_TITLE,
+                      MENU_HEADER_TITLE_FONT,
+                      title_rect,
+                      GTextOverflowModeTrailingEllipsis,
+                      GTextAlignmentCenter,
+                      NULL);
+
+    graphics_context_set_stroke_color(ctx, GColorBlack);
+    graphics_draw_line(ctx, GPoint(HDR_INSET, MENU_HEADER_DIVIDER_Y), GPoint(bounds.size.w - HDR_INSET, MENU_HEADER_DIVIDER_Y));
+
+    GRect subtitle_left = GRect(HDR_INSET, MENU_HEADER_SUBTITLE_Y, 80, 14);
+    graphics_draw_text(ctx, "Calendar",
+                      MENU_HEADER_SUBTITLE_FONT,
+                      subtitle_left,
+                      GTextOverflowModeTrailingEllipsis,
+                      GTextAlignmentLeft,
+                      NULL);
+
+    GRect subtitle_right = GRect(bounds.size.w - 80 - HDR_INSET, MENU_HEADER_SUBTITLE_Y, 76, 14);
+    graphics_draw_text(ctx, s_subtitle_text,
+                      MENU_HEADER_SUBTITLE_FONT,
+                      subtitle_right,
+                      GTextOverflowModeTrailingEllipsis,
+                      GTextAlignmentRight,
+                      NULL);
+  } else {
+    // Simple section label for Previous Races
+    GRect label_rect = GRect(HDR_INSET, 1, bounds.size.w - 2 * HDR_INSET, bounds.size.h - 2);
+    graphics_draw_text(ctx, "Previous",
+                      MENU_HEADER_SUBTITLE_FONT,
+                      label_rect,
+                      GTextOverflowModeTrailingEllipsis,
+                      GTextAlignmentLeft,
+                      NULL);
+  }
 }
 
 static int16_t get_header_height_callback(struct MenuLayer *menu_layer,
                                           uint16_t section_index,
                                           void *context) {
-  return MENU_CELL_BASIC_HEADER_HEIGHT;
+  return (section_index == SECTION_UPCOMING) ? MENU_HEADER_HEIGHT : MENU_CELL_BASIC_HEADER_HEIGHT;
 }
 
 static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
@@ -224,48 +253,34 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
   }
 
   if (race) {
-    // Get bounds and calculate positions
     GRect bounds = layer_get_bounds(cell_layer);
-
-    // Check if this cell is selected to invert text color
     bool selected = menu_layer_is_index_selected(s_menu_layer, cell_index);
 
-    // Draw custom color selection background on color displays
     if (selected) {
       graphics_context_set_fill_color(ctx, HIGHLIGHT_BG);
       graphics_fill_rect(ctx, bounds, 0, GCornerNone);
     }
 
     GColor text_color = selected ? TEXT_COLOR_SELECTED : TEXT_COLOR_UNSELECTED;
+    graphics_context_set_text_color(ctx, text_color);
 
-    // Draw round number in icon position (left side)
+    // Round number in fixed-width left column
     char round_text[4];
     snprintf(round_text, sizeof(round_text), "%d", race->round);
-
-    GRect round_rect = GRect(4, 4, 28, bounds.size.h - 8);
-    graphics_context_set_text_color(ctx, text_color);
+    GRect round_rect = GRect(H_INSET, 2, MENU_ROW_POS_WIDTH, bounds.size.h - 4);
     graphics_draw_text(ctx, round_text,
-                      fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD),
+                      MENU_ROW_FONT,
                       round_rect,
-                      GTextOverflowModeTrailingEllipsis,
-                      GTextAlignmentCenter,
-                      NULL);
-
-    // Draw race name and location with offset for round number
-    const int text_offset_x = 36;
-    GRect title_rect = GRect(text_offset_x, 0, bounds.size.w - text_offset_x - 4, 22);
-    GRect subtitle_rect = GRect(text_offset_x, 22, bounds.size.w - text_offset_x - 4, 20);
-
-    graphics_draw_text(ctx, race->name,
-                      fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD),
-                      title_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
                       NULL);
 
-    graphics_draw_text(ctx, race->location,
-                      fonts_get_system_font(FONT_KEY_GOTHIC_18),
-                      subtitle_rect,
+    // Race name starting at fixed offset after round column
+    const int name_x = H_INSET + MENU_ROW_POS_WIDTH + MENU_ROW_POS_GAP;
+    GRect name_rect = GRect(name_x, 2, bounds.size.w - name_x - H_INSET, bounds.size.h - 4);
+    graphics_draw_text(ctx, race->name,
+                      MENU_ROW_FONT,
+                      name_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
                       NULL);
@@ -276,7 +291,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 
 static int16_t get_cell_height_callback(struct MenuLayer *menu_layer,
                                         MenuIndex *cell_index, void *context) {
-  return 44;
+  return MENU_CELL_HEIGHT;
 }
 
 static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
@@ -308,10 +323,11 @@ static void window_load(Window *window) {
   s_menu_layer = menu_layer_create(bounds);
   menu_layer_set_click_config_onto_window(s_menu_layer, window);
 
-  // Set custom color highlight on color displays
-#ifdef PBL_COLOR
-  menu_layer_set_highlight_colors(s_menu_layer, GColorFromHEX(0x489bb0), GColorWhite);
+#ifdef PBL_ROUND
+  menu_layer_set_center_focused(s_menu_layer, true);
 #endif
+
+  menu_layer_set_highlight_colors(s_menu_layer, HIGHLIGHT_BG, TEXT_COLOR_SELECTED);
 
   // Set callbacks
   menu_layer_set_callbacks(s_menu_layer, NULL,
@@ -347,9 +363,7 @@ static void window_unload(Window *window) {
 }
 
 static void window_appear(Window *window) {
-  // Update header
-  extern int g_current_season;
-  snprintf(s_header_text, sizeof(s_header_text), "%d Season", g_current_season);
+  snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d", g_current_season);
 }
 
 void calendar_window_push(void) {
