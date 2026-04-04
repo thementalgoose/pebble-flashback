@@ -13,9 +13,11 @@ void utils_format_datetime(const char *iso_datetime, char *output,
 // Output: "Mar 14, 2025"
 void utils_format_date(const char *iso_date, char *output, size_t output_size);
 
-// Compare date with current date
-// Returns: -1 if date is in past, 0 if today, 1 if future
-int utils_compare_date_with_now(const char *iso_date);
-
 // Get month abbreviation
 const char *utils_get_month_abbr(int month);
+
+// Format datetime from ISO string to compact form
+// Input: "2025-07-12T18:30:00Z"
+// Output: "12/07 18:30"
+void utils_format_datetime_compact(const char *iso_datetime, char *output,
+                                   size_t output_size);

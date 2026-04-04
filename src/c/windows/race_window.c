@@ -3,9 +3,12 @@
 #include "../message_handler.h"
 #include "../utils.h"
 #include "../colors.h"
+#include "../ui_constants.h"
 #include <pebble.h>
 
 #define MAX_EVENTS 10
+// Width of the fixed event-code column (fits up to 3 chars e.g. "FP1")
+#define EVENT_CODE_WIDTH 28
 
 static Window *s_window;
 static MenuLayer *s_menu_layer;
@@ -16,11 +19,6 @@ static int s_event_count = 0;
 static bool s_data_loaded = false;
 static int s_current_race_index = -1;
 static char s_race_name[64] = "Race Schedule";
-
-// Menu icons
-static GBitmap *s_icon_fp;
-static GBitmap *s_icon_quali;
-static GBitmap *s_icon_race;
 
 // Parse pipe-delimited event data
 static void parse_event_data(const char *data) {
@@ -124,6 +122,23 @@ static void race_inbox_received(DictionaryIterator *iterator, void *context) {
   }
 }
 
+// Map a full event label to its shorthand code
+static void abbreviate_event(const char *label, char *out, size_t out_size) {
+  if (!label || !out || out_size < 4) return;
+
+  if      (strstr(label, "Free Practice 1") || strstr(label, "Practice 1")) snprintf(out, out_size, "FP1");
+  else if (strstr(label, "Free Practice 2") || strstr(label, "Practice 2")) snprintf(out, out_size, "FP2");
+  else if (strstr(label, "Free Practice 3") || strstr(label, "Practice 3")) snprintf(out, out_size, "FP3");
+  else if (strstr(label, "Sprint Qualifying") || strstr(label, "Sprint Shootout")) snprintf(out, out_size, "SQ");
+  else if (strstr(label, "Sprint"))      snprintf(out, out_size, "SR");
+  else if (strstr(label, "Qualifying"))  snprintf(out, out_size, "Q");
+  else if (strstr(label, "Race"))        snprintf(out, out_size, "R");
+  else {
+    strncpy(out, label, 3);
+    out[3] = '\0';
+  }
+}
+
 // Menu layer callbacks
 static uint16_t get_num_rows_callback(MenuLayer *menu_layer,
                                       uint16_t section_index, void *context) {
@@ -142,13 +157,38 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 
   if (cell_index->row < s_event_count) {
     RaceEvent *event = &s_events[cell_index->row];
+    GRect bounds = layer_get_bounds(cell_layer);
+    bool selected = menu_layer_is_index_selected(s_menu_layer, cell_index);
 
-    // Format datetime for display
-    char formatted_time[64];
-    utils_format_datetime(event->datetime, formatted_time,
-                          sizeof(formatted_time));
+    if (selected) {
+      graphics_context_set_fill_color(ctx, HIGHLIGHT_BG);
+      graphics_fill_rect(ctx, bounds, 0, GCornerNone);
+    }
 
-    menu_cell_basic_draw(ctx, cell_layer, event->label, formatted_time, NULL);
+    GColor text_color = selected ? TEXT_COLOR_SELECTED : TEXT_COLOR_UNSELECTED;
+    graphics_context_set_text_color(ctx, text_color);
+
+    // Event shorthand code in fixed-width left column
+    char code[4];
+    abbreviate_event(event->label, code, sizeof(code));
+    GRect code_rect = GRect(H_INSET, 2, EVENT_CODE_WIDTH, bounds.size.h - 4);
+    graphics_draw_text(ctx, code,
+                      MENU_ROW_FONT,
+                      code_rect,
+                      GTextOverflowModeTrailingEllipsis,
+                      GTextAlignmentLeft,
+                      NULL);
+
+    // Compact date/time right-aligned
+    char compact_time[12];
+    utils_format_datetime_compact(event->datetime, compact_time, sizeof(compact_time));
+    GRect time_rect = GRect(bounds.size.w - 80 - H_INSET, 2, 80, bounds.size.h - 4);
+    graphics_draw_text(ctx, compact_time,
+                      MENU_ROW_FONT,
+                      time_rect,
+                      GTextOverflowModeTrailingEllipsis,
+                      GTextAlignmentRight,
+                      NULL);
   } else {
     menu_cell_basic_draw(ctx, cell_layer, "No events", NULL, NULL);
   }
@@ -156,28 +196,39 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 
 static int16_t get_cell_height_callback(struct MenuLayer *menu_layer,
                                         MenuIndex *cell_index, void *context) {
-  return 44;
+  return MENU_CELL_HEIGHT;
 }
 
 static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
                                  uint16_t section_index, void *context) {
-  // Draw header centered on round displays
   GRect bounds = layer_get_bounds(cell_layer);
-  GTextAlignment alignment = PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft);
+  graphics_context_set_text_color(ctx, GColorBlack);
 
-  graphics_context_set_text_color(ctx, TEXT_COLOR_UNSELECTED);
-  graphics_draw_text(ctx, s_race_name,
-                    fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
-                    GRect(PBL_IF_ROUND_ELSE(0, 5), 0, bounds.size.w - PBL_IF_ROUND_ELSE(0, 5), bounds.size.h),
+  GRect title_rect = GRect(HDR_INSET, 0, bounds.size.w - 2 * HDR_INSET, MENU_HEADER_DIVIDER_Y);
+  graphics_draw_text(ctx, APP_TITLE,
+                    MENU_HEADER_TITLE_FONT,
+                    title_rect,
                     GTextOverflowModeTrailingEllipsis,
-                    alignment,
+                    GTextAlignmentCenter,
+                    NULL);
+
+  graphics_context_set_stroke_color(ctx, GColorBlack);
+  graphics_draw_line(ctx, GPoint(HDR_INSET, MENU_HEADER_DIVIDER_Y), GPoint(bounds.size.w - HDR_INSET, MENU_HEADER_DIVIDER_Y));
+
+  // Race name as subtitle, spanning full width
+  GRect subtitle_rect = GRect(HDR_INSET, MENU_HEADER_SUBTITLE_Y, bounds.size.w - 2 * HDR_INSET, 14);
+  graphics_draw_text(ctx, s_race_name,
+                    MENU_HEADER_SUBTITLE_FONT,
+                    subtitle_rect,
+                    GTextOverflowModeTrailingEllipsis,
+                    GTextAlignmentLeft,
                     NULL);
 }
 
 static int16_t get_header_height_callback(struct MenuLayer *menu_layer,
                                           uint16_t section_index,
                                           void *context) {
-  return MENU_CELL_BASIC_HEADER_HEIGHT;
+  return MENU_HEADER_HEIGHT;
 }
 
 static uint16_t get_num_sections_callback(struct MenuLayer *menu_layer,
@@ -194,8 +245,11 @@ static void window_load(Window *window) {
   s_menu_layer = menu_layer_create(bounds);
   menu_layer_set_click_config_onto_window(s_menu_layer, window);
 
-  // Set custom color highlight on color displays
-  menu_layer_set_highlight_colors(s_menu_layer, HIGHLIGHT_BG, GColorWhite);
+#ifdef PBL_ROUND
+  menu_layer_set_center_focused(s_menu_layer, true);
+#endif
+
+  menu_layer_set_highlight_colors(s_menu_layer, HIGHLIGHT_BG, TEXT_COLOR_SELECTED);
 
   // Set callbacks
   menu_layer_set_callbacks(s_menu_layer, NULL,
@@ -226,11 +280,7 @@ static void window_load(Window *window) {
 
 static void window_unload(Window *window) {
   menu_layer_destroy(s_menu_layer);
-
-  // Destroy menu icons
-  gbitmap_destroy(s_icon_fp);
-  gbitmap_destroy(s_icon_quali);
-  gbitmap_destroy(s_icon_race);
+  s_menu_layer = NULL;
 }
 
 void race_window_push(int race_index, const char *race_name) {

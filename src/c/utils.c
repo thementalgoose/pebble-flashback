@@ -119,46 +119,23 @@ void utils_format_date(const char *iso_date, char *output, size_t output_size) {
   output[out_pos] = '\0';
 }
 
-int utils_compare_date_with_now(const char *iso_date) {
-  if (!iso_date) {
-    return 0;
+void utils_format_datetime_compact(const char *iso_datetime, char *output,
+                                   size_t output_size) {
+  if (!iso_datetime || !output || output_size < 12) {
+    return;
   }
 
-  // Parse ISO date manually
+  // Parse ISO datetime: "2025-07-12T18:30:00Z"
   int pos = 0;
-  int year = parse_int(iso_date, &pos, 4);
-  pos++;
-  int month = parse_int(iso_date, &pos, 2);
-  pos++;
-  int day = parse_int(iso_date, &pos, 2);
+  parse_int(iso_datetime, &pos, 4); // year (unused)
+  pos++;                             // skip '-'
+  int month = parse_int(iso_datetime, &pos, 2);
+  pos++;                             // skip '-'
+  int day = parse_int(iso_datetime, &pos, 2);
+  pos++;                             // skip 'T'
+  int hour = parse_int(iso_datetime, &pos, 2);
+  pos++;                             // skip ':'
+  int minute = parse_int(iso_datetime, &pos, 2);
 
-  // Get current time
-  time_t now = time(NULL);
-
-  // Manual time conversion
-  const int seconds_per_day = 86400;
-  int days_since_epoch = now / seconds_per_day;
-
-  // Calculate days for the race date
-  int race_days = (year - 1970) * 365 + (year - 1969) / 4;
-
-  // Add days for months
-  const int days_per_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-  for (int m = 1; m < month; m++) {
-    race_days += days_per_month[m - 1];
-  }
-
-  // Add leap day if needed
-  if (month > 2 && ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
-    race_days++;
-  }
-
-  race_days += day;
-
-  // Compare
-  if (race_days < days_since_epoch)
-    return -1;
-  if (race_days > days_since_epoch)
-    return 1;
-  return 0;
+  snprintf(output, output_size, "%02d/%02d %02d:%02d", day, month, hour, minute);
 }
