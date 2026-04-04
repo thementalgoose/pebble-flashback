@@ -1,4 +1,5 @@
 #include "calendar_window.h"
+#include "flashback_screen.h"
 #include "../colors.h"
 #include "../ui_constants.h"
 #include "../data_models.h"
@@ -181,39 +182,11 @@ static uint16_t get_num_rows_callback(MenuLayer *menu_layer,
 
 static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
                                  uint16_t section_index, void *context) {
-  GRect bounds = layer_get_bounds(cell_layer);
-  graphics_context_set_text_color(ctx, GColorBlack);
-
   if (section_index == SECTION_UPCOMING) {
-    // Full Flashback header for the first section
-    GRect title_rect = GRect(HDR_INSET, 0, bounds.size.w - 2 * HDR_INSET, MENU_HEADER_DIVIDER_Y);
-    graphics_draw_text(ctx, APP_TITLE,
-                      MENU_HEADER_TITLE_FONT,
-                      title_rect,
-                      GTextOverflowModeTrailingEllipsis,
-                      GTextAlignmentCenter,
-                      NULL);
-
-    graphics_context_set_stroke_color(ctx, DIVIDER_COLOR);
-    graphics_draw_line(ctx, GPoint(HDR_INSET, MENU_HEADER_DIVIDER_Y), GPoint(bounds.size.w - HDR_INSET, MENU_HEADER_DIVIDER_Y));
-
-    GRect subtitle_left = GRect(HDR_INSET, MENU_HEADER_SUBTITLE_Y, 80, 14);
-    graphics_draw_text(ctx, "Calendar",
-                      MENU_HEADER_SUBTITLE_FONT,
-                      subtitle_left,
-                      GTextOverflowModeTrailingEllipsis,
-                      GTextAlignmentLeft,
-                      NULL);
-
-    GRect subtitle_right = GRect(bounds.size.w - 80 - HDR_INSET, MENU_HEADER_SUBTITLE_Y, 76, 14);
-    graphics_draw_text(ctx, s_subtitle_text,
-                      MENU_HEADER_SUBTITLE_FONT,
-                      subtitle_right,
-                      GTextOverflowModeTrailingEllipsis,
-                      GTextAlignmentRight,
-                      NULL);
+    flashback_screen_draw_header(ctx, cell_layer, "Calendar", s_subtitle_text);
   } else {
-    // Simple section label for Previous Races
+    GRect bounds = layer_get_bounds(cell_layer);
+    graphics_context_set_text_color(ctx, GColorBlack);
     GRect label_rect = GRect(HDR_INSET, 1, bounds.size.w - 2 * HDR_INSET, bounds.size.h - 2);
     graphics_draw_text(ctx, "Previous",
                       MENU_HEADER_SUBTITLE_FONT,
@@ -289,11 +262,6 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
   }
 }
 
-static int16_t get_cell_height_callback(struct MenuLayer *menu_layer,
-                                        MenuIndex *cell_index, void *context) {
-  return MENU_CELL_HEIGHT;
-}
-
 static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
                             void *context) {
   Race *race = NULL;
@@ -316,20 +284,8 @@ static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
 
 // Window lifecycle
 static void window_load(Window *window) {
-  Layer *window_layer = window_get_root_layer(window);
-  GRect bounds = layer_get_bounds(window_layer);
+  s_menu_layer = flashback_screen_create_menu_layer(window);
 
-  // Create menu layer (full screen, no status bar)
-  s_menu_layer = menu_layer_create(bounds);
-  menu_layer_set_click_config_onto_window(s_menu_layer, window);
-
-#ifdef PBL_ROUND
-  menu_layer_set_center_focused(s_menu_layer, true);
-#endif
-
-  menu_layer_set_highlight_colors(s_menu_layer, HIGHLIGHT_BG, TEXT_COLOR_SELECTED);
-
-  // Set callbacks
   menu_layer_set_callbacks(s_menu_layer, NULL,
                            (MenuLayerCallbacks){
                                .get_num_sections = get_num_sections_callback,
@@ -337,22 +293,14 @@ static void window_load(Window *window) {
                                .draw_row = draw_row_callback,
                                .draw_header = draw_header_callback,
                                .get_header_height = get_header_height_callback,
-                               .get_cell_height = get_cell_height_callback,
+                               .get_cell_height = flashback_screen_cell_height_callback,
                                .select_click = select_callback,
                            });
 
-  layer_add_child(window_layer, menu_layer_get_layer(s_menu_layer));
-
-  // Request overview data if not loaded
   if (!s_upcoming_loaded || !s_past_loaded) {
-    // Set the legacy callbacks (for compatibility, though not used)
     message_handler_set_overview_callbacks(on_race_data_received,
                                            on_race_count_received);
-
-    // Register our custom inbox handler for the formatted text
     app_message_register_inbox_received(calendar_inbox_received);
-
-    // Request the data
     message_handler_request_overview();
   }
 }

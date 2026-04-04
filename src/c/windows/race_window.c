@@ -1,4 +1,5 @@
 #include "race_window.h"
+#include "flashback_screen.h"
 #include "../data_models.h"
 #include "../message_handler.h"
 #include "../utils.h"
@@ -194,86 +195,30 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
   }
 }
 
-static int16_t get_cell_height_callback(struct MenuLayer *menu_layer,
-                                        MenuIndex *cell_index, void *context) {
-  return MENU_CELL_HEIGHT;
-}
-
 static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
                                  uint16_t section_index, void *context) {
-  GRect bounds = layer_get_bounds(cell_layer);
-  graphics_context_set_text_color(ctx, GColorBlack);
-
-  GRect title_rect = GRect(HDR_INSET, 0, bounds.size.w - 2 * HDR_INSET, MENU_HEADER_DIVIDER_Y);
-  graphics_draw_text(ctx, APP_TITLE,
-                    MENU_HEADER_TITLE_FONT,
-                    title_rect,
-                    GTextOverflowModeTrailingEllipsis,
-                    GTextAlignmentCenter,
-                    NULL);
-
-  graphics_context_set_stroke_color(ctx, DIVIDER_COLOR);
-  graphics_draw_line(ctx, GPoint(HDR_INSET, MENU_HEADER_DIVIDER_Y), GPoint(bounds.size.w - HDR_INSET, MENU_HEADER_DIVIDER_Y));
-
-  // Race name as subtitle, spanning full width
-  GRect subtitle_rect = GRect(HDR_INSET, MENU_HEADER_SUBTITLE_Y, bounds.size.w - 2 * HDR_INSET, 14);
-  graphics_draw_text(ctx, s_race_name,
-                    MENU_HEADER_SUBTITLE_FONT,
-                    subtitle_rect,
-                    GTextOverflowModeTrailingEllipsis,
-                    GTextAlignmentLeft,
-                    NULL);
-}
-
-static int16_t get_header_height_callback(struct MenuLayer *menu_layer,
-                                          uint16_t section_index,
-                                          void *context) {
-  return MENU_HEADER_HEIGHT;
-}
-
-static uint16_t get_num_sections_callback(struct MenuLayer *menu_layer,
-                                          void *context) {
-  return 1;
+  flashback_screen_draw_header(ctx, cell_layer, s_race_name, NULL);
 }
 
 // Window lifecycle
 static void window_load(Window *window) {
-  Layer *window_layer = window_get_root_layer(window);
-  GRect bounds = layer_get_bounds(window_layer);
+  s_menu_layer = flashback_screen_create_menu_layer(window);
 
-  // Create menu layer (full screen, no status bar)
-  s_menu_layer = menu_layer_create(bounds);
-  menu_layer_set_click_config_onto_window(s_menu_layer, window);
-
-#ifdef PBL_ROUND
-  menu_layer_set_center_focused(s_menu_layer, true);
-#endif
-
-  menu_layer_set_highlight_colors(s_menu_layer, HIGHLIGHT_BG, TEXT_COLOR_SELECTED);
-
-  // Set callbacks
   menu_layer_set_callbacks(s_menu_layer, NULL,
                            (MenuLayerCallbacks){
+                               .get_num_sections = flashback_screen_num_sections_callback,
                                .get_num_rows = get_num_rows_callback,
                                .draw_row = draw_row_callback,
-                               .get_cell_height = get_cell_height_callback,
+                               .get_cell_height = flashback_screen_cell_height_callback,
                                .draw_header = draw_header_callback,
-                               .get_header_height = get_header_height_callback,
-                               .get_num_sections = get_num_sections_callback,
+                               .get_header_height = flashback_screen_header_height_callback,
                            });
 
-  layer_add_child(window_layer, menu_layer_get_layer(s_menu_layer));
-
-  // Register our custom inbox handler for the formatted text (only once)
   app_message_register_inbox_received(race_inbox_received);
 
-  // Request race details if not loaded
   if (s_current_race_index >= 0 && !s_data_loaded) {
-    // Set the legacy callbacks (for compatibility, though not used)
     message_handler_set_race_details_callbacks(on_event_data_received,
                                                on_event_count_received);
-
-    // Request the data
     message_handler_request_race_details(s_current_race_index);
   }
 }
