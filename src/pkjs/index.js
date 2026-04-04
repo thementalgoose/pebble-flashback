@@ -437,7 +437,17 @@ function pushTimelinePins() {
                             title:  event.label,
                             tinyIcon: 'system://images/TIMELINE_CALENDAR',
                             body: race.name + ' \u2022 ' + location
-                        }
+                        },
+                        reminders: [
+                            {
+                                time: eventTime.toISOString(),
+                                layout: {
+                                    type: "genericReminder",
+                                    tinyIcon: "system://images/TIMELINE_CALENDAR",
+                                    title: event.label + " " + race.name
+                                }
+                            }
+                        ]
                     });
                 });
             });
