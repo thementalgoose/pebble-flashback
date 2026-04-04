@@ -212,7 +212,7 @@ static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
                     GTextAlignmentCenter,
                     NULL);
 
-  graphics_context_set_stroke_color(ctx, GColorBlack);
+  graphics_context_set_stroke_color(ctx, DIVIDER_COLOR);
   graphics_draw_line(ctx, GPoint(HDR_INSET, MENU_HEADER_DIVIDER_Y), GPoint(bounds.size.w - HDR_INSET, MENU_HEADER_DIVIDER_Y));
 
   // Race name as subtitle, spanning full width
