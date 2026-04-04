@@ -32,9 +32,11 @@
 // ---------------------------------------------------------------------------
 // Fonts
 // ---------------------------------------------------------------------------
-#define MENU_ROW_FONT             FONT_KEY_GOTHIC_18_BOLD
-#define MENU_HEADER_TITLE_FONT    FONT_KEY_GOTHIC_14
-#define MENU_HEADER_SUBTITLE_FONT FONT_KEY_GOTHIC_14_BOLD
+#define MENU_ROW_FONT             fonts_load_custom_font(resource_get_handle(RESOURCE_ID_ROBOTO_MONO_MEDIUM_18))
+#define MENU_HEADER_TITLE_FONT    fonts_get_system_font(FONT_KEY_GOTHIC_14)
+#define MENU_HEADER_SUBTITLE_FONT fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD)
+// fonts_load_custom_font(resource_get_handle(RESOURCE_ID_ROBOTO_MONO_LIGHT_14))
+// fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD)
 
 // ---------------------------------------------------------------------------
 // Shared strings

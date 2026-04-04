@@ -166,7 +166,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     snprintf(position_text, sizeof(position_text), "%d", team->position);
     GRect pos_rect = GRect(H_INSET, 2, MENU_ROW_POS_WIDTH, bounds.size.h - 4);
     graphics_draw_text(ctx, position_text,
-                      fonts_get_system_font(MENU_ROW_FONT),
+                      MENU_ROW_FONT,
                       pos_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
@@ -176,7 +176,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     const int name_x = H_INSET + MENU_ROW_POS_WIDTH + MENU_ROW_POS_GAP;
     GRect text_rect = GRect(name_x, 2, bounds.size.w - name_x - 46, bounds.size.h - 4);
     graphics_draw_text(ctx, team->name,
-                      fonts_get_system_font(MENU_ROW_FONT),
+                      MENU_ROW_FONT,
                       text_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
@@ -186,7 +186,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     snprintf(points_text, sizeof(points_text), "%d", team->points);
     GRect points_rect = GRect(bounds.size.w - 44 - H_INSET, 2, 42, bounds.size.h - 4);
     graphics_draw_text(ctx, points_text,
-                      fonts_get_system_font(MENU_ROW_FONT),
+                      MENU_ROW_FONT,
                       points_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentRight,
@@ -208,7 +208,7 @@ static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
 
   GRect title_rect = GRect(HDR_INSET, 0, bounds.size.w - 2 * HDR_INSET, MENU_HEADER_DIVIDER_Y);
   graphics_draw_text(ctx, APP_TITLE,
-                    fonts_get_system_font(MENU_HEADER_TITLE_FONT),
+                    MENU_HEADER_TITLE_FONT,
                     title_rect,
                     GTextOverflowModeTrailingEllipsis,
                     GTextAlignmentCenter,
@@ -219,7 +219,7 @@ static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
 
   GRect subtitle_left = GRect(HDR_INSET, MENU_HEADER_SUBTITLE_Y, 80, 14);
   graphics_draw_text(ctx, "Teams",
-                    fonts_get_system_font(MENU_HEADER_SUBTITLE_FONT),
+                    MENU_HEADER_SUBTITLE_FONT,
                     subtitle_left,
                     GTextOverflowModeTrailingEllipsis,
                     GTextAlignmentLeft,
@@ -227,7 +227,7 @@ static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
 
   GRect subtitle_right = GRect(bounds.size.w - 80 - HDR_INSET, MENU_HEADER_SUBTITLE_Y, 76, 14);
   graphics_draw_text(ctx, s_subtitle_text,
-                    fonts_get_system_font(MENU_HEADER_SUBTITLE_FONT),
+                    MENU_HEADER_SUBTITLE_FONT,
                     subtitle_right,
                     GTextOverflowModeTrailingEllipsis,
                     GTextAlignmentRight,

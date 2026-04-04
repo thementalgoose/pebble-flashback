@@ -53,7 +53,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
   graphics_context_set_text_color(ctx, selected ? TEXT_COLOR_SELECTED : TEXT_COLOR_UNSELECTED);
   GRect text_rect = GRect(H_INSET, 2, bounds.size.w - 2 * H_INSET, bounds.size.h - 4);
   graphics_draw_text(ctx, title,
-                    fonts_get_system_font(MENU_ROW_FONT),
+                    MENU_ROW_FONT,
                     text_rect,
                     GTextOverflowModeTrailingEllipsis,
                     GTextAlignmentLeft,
@@ -90,7 +90,7 @@ static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
 
   GRect title_rect = GRect(HDR_INSET, 0, bounds.size.w - 2 * HDR_INSET, MENU_HEADER_DIVIDER_Y);
   graphics_draw_text(ctx, APP_TITLE,
-                    fonts_get_system_font(MENU_HEADER_TITLE_FONT),
+                    MENU_HEADER_TITLE_FONT,
                     title_rect,
                     GTextOverflowModeTrailingEllipsis,
                     GTextAlignmentCenter,
@@ -101,7 +101,7 @@ static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
 
   GRect subtitle_left = GRect(HDR_INSET, MENU_HEADER_SUBTITLE_Y, 80, 14);
   graphics_draw_text(ctx, "Season",
-                    fonts_get_system_font(MENU_HEADER_SUBTITLE_FONT),
+                    MENU_HEADER_SUBTITLE_FONT,
                     subtitle_left,
                     GTextOverflowModeTrailingEllipsis,
                     GTextAlignmentLeft,
@@ -109,7 +109,7 @@ static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
 
   GRect subtitle_right = GRect(bounds.size.w - 80 - HDR_INSET, MENU_HEADER_SUBTITLE_Y, 76, 14);
   graphics_draw_text(ctx, s_subtitle_text,
-                    fonts_get_system_font(MENU_HEADER_SUBTITLE_FONT),
+                    MENU_HEADER_SUBTITLE_FONT,
                     subtitle_right,
                     GTextOverflowModeTrailingEllipsis,
                     GTextAlignmentRight,
