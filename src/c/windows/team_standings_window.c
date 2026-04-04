@@ -6,9 +6,17 @@
 
 #define MAX_TEAMS 15
 
+#ifdef PBL_ROUND
+  #define H_INSET 16
+  #define HDR_INSET 22
+#else
+  #define H_INSET 4
+  #define HDR_INSET 4
+#endif
+
 static Window *s_window;
 static MenuLayer *s_menu_layer;
-static char s_header_text[32];
+static char s_subtitle_text[32];
 
 // Team standings data storage
 static ConstructorStanding s_teams[MAX_TEAMS];
@@ -148,54 +156,42 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
   if (cell_index->row < s_team_count) {
     ConstructorStanding *team = &s_teams[cell_index->row];
 
-    // Get bounds and calculate positions
     GRect bounds = layer_get_bounds(cell_layer);
 
-    // Check if this cell is selected to invert text color
     bool selected = menu_layer_is_index_selected(s_menu_layer, cell_index);
 
-    // Draw custom color selection background on color displays
     if (selected) {
-      graphics_context_set_fill_color(ctx, HIGHLIGHT_BG);
+      graphics_context_set_fill_color(ctx, GColorBlack);
       graphics_fill_rect(ctx, bounds, 0, GCornerNone);
     }
 
-    GColor text_color = selected ? TEXT_COLOR_SELECTED : TEXT_COLOR_UNSELECTED;
-
-    // Draw position number on the left
-    char position_text[4];
-    snprintf(position_text, sizeof(position_text), "%d", team->position);
-
-    GRect position_rect = GRect(4, 4, 28, bounds.size.h - 8);
+    GColor text_color = selected ? GColorWhite : GColorBlack;
     graphics_context_set_text_color(ctx, text_color);
-    graphics_draw_text(ctx, position_text,
-                      fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD),
-                      position_rect,
-                      GTextOverflowModeTrailingEllipsis,
-                      GTextAlignmentCenter,
-                      NULL);
 
-    // Draw team name and points with offset for position number
-    const int text_offset_x = 36;
-    GRect name_rect = GRect(text_offset_x, 0, bounds.size.w - text_offset_x - 4, 22);
+    // "1  TeamName" (extra space for single-digit alignment)
+    char row_text[64];
+    if (team->position < 10) {
+      snprintf(row_text, sizeof(row_text), "%d  %s", team->position, team->name);
+    } else {
+      snprintf(row_text, sizeof(row_text), "%d %s", team->position, team->name);
+    }
 
-    // Format points display
-    char points_text[32];
-    snprintf(points_text, sizeof(points_text), "%d pts", team->points);
-    GRect points_rect = GRect(text_offset_x, 22, bounds.size.w - text_offset_x - 4, 20);
-
-    graphics_draw_text(ctx, team->name,
-                      fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD),
-                      name_rect,
+    GRect text_rect = GRect(H_INSET, 2, bounds.size.w - H_INSET - 46, bounds.size.h - 4);
+    graphics_draw_text(ctx, row_text,
+                      fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
+                      text_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
                       NULL);
 
+    char points_text[16];
+    snprintf(points_text, sizeof(points_text), "%d", team->points);
+    GRect points_rect = GRect(bounds.size.w - 44 - H_INSET, 2, 42, bounds.size.h - 4);
     graphics_draw_text(ctx, points_text,
-                      fonts_get_system_font(FONT_KEY_GOTHIC_18),
+                      fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
                       points_rect,
                       GTextOverflowModeTrailingEllipsis,
-                      GTextAlignmentLeft,
+                      GTextAlignmentRight,
                       NULL);
   } else {
     menu_cell_basic_draw(ctx, cell_layer, "No teams", NULL, NULL);
@@ -204,28 +200,46 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 
 static int16_t get_cell_height_callback(struct MenuLayer *menu_layer,
                                         MenuIndex *cell_index, void *context) {
-  return 44;
+  return 28;
 }
 
 static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
                                  uint16_t section_index, void *context) {
-  // Draw header centered on round displays
   GRect bounds = layer_get_bounds(cell_layer);
-  GTextAlignment alignment = PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft);
+  graphics_context_set_text_color(ctx, GColorBlack);
 
-  graphics_context_set_text_color(ctx, TEXT_COLOR_UNSELECTED);
-  graphics_draw_text(ctx, s_header_text,
-                    fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
-                    GRect(PBL_IF_ROUND_ELSE(0, 5), 0, bounds.size.w - PBL_IF_ROUND_ELSE(0, 5), bounds.size.h),
+  GRect title_rect = GRect(HDR_INSET, 0, bounds.size.w - 2 * HDR_INSET, 20);
+  graphics_draw_text(ctx, "Flashback",
+                    fonts_get_system_font(FONT_KEY_GOTHIC_14),
+                    title_rect,
                     GTextOverflowModeTrailingEllipsis,
-                    alignment,
+                    GTextAlignmentCenter,
+                    NULL);
+
+  graphics_context_set_stroke_color(ctx, GColorBlack);
+  graphics_draw_line(ctx, GPoint(HDR_INSET, 20), GPoint(bounds.size.w - HDR_INSET, 20));
+
+  GRect subtitle_left = GRect(HDR_INSET, 22, 80, 14);
+  graphics_draw_text(ctx, "Teams",
+                    fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
+                    subtitle_left,
+                    GTextOverflowModeTrailingEllipsis,
+                    GTextAlignmentLeft,
+                    NULL);
+
+  GRect subtitle_right = GRect(bounds.size.w - 80 - HDR_INSET, 22, 76, 14);
+  graphics_draw_text(ctx, s_subtitle_text,
+                    fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
+                    subtitle_right,
+                    GTextOverflowModeTrailingEllipsis,
+                    GTextAlignmentRight,
                     NULL);
 }
 
 static int16_t get_header_height_callback(struct MenuLayer *menu_layer,
                                           uint16_t section_index,
                                           void *context) {
-  return MENU_CELL_BASIC_HEADER_HEIGHT;
+  return 42;
 }
 
 static uint16_t get_num_sections_callback(struct MenuLayer *menu_layer,
@@ -242,10 +256,11 @@ static void window_load(Window *window) {
   s_menu_layer = menu_layer_create(bounds);
   menu_layer_set_click_config_onto_window(s_menu_layer, window);
 
-  // Set custom color highlight on color displays
-#ifdef PBL_COLOR
-  menu_layer_set_highlight_colors(s_menu_layer, GColorFromHEX(0x489bb0), GColorWhite);
+#ifdef PBL_ROUND
+  menu_layer_set_center_focused(s_menu_layer, true);
 #endif
+
+  menu_layer_set_highlight_colors(s_menu_layer, GColorBlack, GColorWhite);
 
   // Set callbacks
   menu_layer_set_callbacks(s_menu_layer, NULL,
@@ -260,8 +275,7 @@ static void window_load(Window *window) {
 
   layer_add_child(window_layer, menu_layer_get_layer(s_menu_layer));
 
-  // Set header text
-  snprintf(s_header_text, sizeof(s_header_text), "%d Team Standings", g_current_season);
+  snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d", g_current_season);
 
   // Request team standings data if not loaded
   if (!s_data_loaded) {
