@@ -1,22 +1,14 @@
 #include "driver_standings_window.h"
 #include "../colors.h"
+#include "../ui_constants.h"
 #include "../data_models.h"
 #include "../message_handler.h"
 #include <pebble.h>
 
 #define MAX_DRIVERS 30
 
-#ifdef PBL_ROUND
-  #define H_INSET 16  // Horizontal inset to avoid circular bezel clipping rows
-  #define HDR_INSET 22 // Larger inset for header which sits near the top arc
-#else
-  #define H_INSET 4
-  #define HDR_INSET 4
-#endif
-
 static Window *s_window;
 static MenuLayer *s_menu_layer;
-static char s_header_text[32];
 static char s_subtitle_text[32];
 
 // Driver standings data storage
@@ -239,7 +231,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     // Draw position and name on left using monospace-style font
     GRect text_rect = GRect(H_INSET, 2, bounds.size.w - H_INSET - 46, bounds.size.h - 4);
     graphics_draw_text(ctx, row_text,
-                      fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
+                      fonts_get_system_font(MENU_ROW_FONT),
                       text_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
@@ -250,7 +242,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     snprintf(points_text, sizeof(points_text), "%d", driver->points);
     GRect points_rect = GRect(bounds.size.w - 44 - H_INSET, 2, 42, bounds.size.h - 4);
     graphics_draw_text(ctx, points_text,
-                      fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
+                      fonts_get_system_font(MENU_ROW_FONT),
                       points_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentRight,
@@ -262,7 +254,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 
 static int16_t get_cell_height_callback(struct MenuLayer *menu_layer,
                                         MenuIndex *cell_index, void *context) {
-  return 28;
+  return MENU_CELL_HEIGHT;
 }
 
 static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
@@ -270,31 +262,28 @@ static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
   GRect bounds = layer_get_bounds(cell_layer);
   graphics_context_set_text_color(ctx, GColorBlack);
 
-  // Draw "Flashback" centered at top
-  GRect title_rect = GRect(HDR_INSET, 0, bounds.size.w - 2 * HDR_INSET, 20);
-  graphics_draw_text(ctx, "Flashback",
-                    fonts_get_system_font(FONT_KEY_GOTHIC_14),
+  GRect title_rect = GRect(HDR_INSET, 0, bounds.size.w - 2 * HDR_INSET, MENU_HEADER_DIVIDER_Y);
+  graphics_draw_text(ctx, APP_TITLE,
+                    fonts_get_system_font(MENU_HEADER_TITLE_FONT),
                     title_rect,
                     GTextOverflowModeTrailingEllipsis,
                     GTextAlignmentCenter,
                     NULL);
 
-  // Draw horizontal line under title
   graphics_context_set_stroke_color(ctx, GColorBlack);
-  graphics_draw_line(ctx, GPoint(HDR_INSET, 20), GPoint(bounds.size.w - HDR_INSET, 20));
+  graphics_draw_line(ctx, GPoint(HDR_INSET, MENU_HEADER_DIVIDER_Y), GPoint(bounds.size.w - HDR_INSET, MENU_HEADER_DIVIDER_Y));
 
-  // Draw "Drivers" on left and year on right
-  GRect subtitle_left = GRect(HDR_INSET, 22, 80, 14);
+  GRect subtitle_left = GRect(HDR_INSET, MENU_HEADER_SUBTITLE_Y, 80, 14);
   graphics_draw_text(ctx, "Drivers",
-                    fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
+                    fonts_get_system_font(MENU_HEADER_SUBTITLE_FONT),
                     subtitle_left,
                     GTextOverflowModeTrailingEllipsis,
                     GTextAlignmentLeft,
                     NULL);
 
-  GRect subtitle_right = GRect(bounds.size.w - 80 - HDR_INSET, 22, 76, 14);
+  GRect subtitle_right = GRect(bounds.size.w - 80 - HDR_INSET, MENU_HEADER_SUBTITLE_Y, 76, 14);
   graphics_draw_text(ctx, s_subtitle_text,
-                    fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
+                    fonts_get_system_font(MENU_HEADER_SUBTITLE_FONT),
                     subtitle_right,
                     GTextOverflowModeTrailingEllipsis,
                     GTextAlignmentRight,
@@ -304,7 +293,7 @@ static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
 static int16_t get_header_height_callback(struct MenuLayer *menu_layer,
                                           uint16_t section_index,
                                           void *context) {
-  return 42; // Height for Flashback title + subtitle
+  return MENU_HEADER_HEIGHT;
 }
 
 static uint16_t get_num_sections_callback(struct MenuLayer *menu_layer,
@@ -343,8 +332,6 @@ static void window_load(Window *window) {
 
   layer_add_child(window_layer, menu_layer_get_layer(s_menu_layer));
 
-  // Set header and subtitle text
-  snprintf(s_header_text, sizeof(s_header_text), "Flashback");
   snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d", g_current_season);
 
   // Request driver standings data if not loaded
