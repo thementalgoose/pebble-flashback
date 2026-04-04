@@ -182,6 +182,10 @@ def main():
     else:
         print("\nNo steps defined.")
 
+    # --- Kill emulator ---
+    print("\nStopping emulator...")
+    run(["pebble", "kill"])
+
     print("\nDone.")
 
 
