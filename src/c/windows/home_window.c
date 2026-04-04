@@ -16,10 +16,10 @@ static MenuLayer *s_menu_layer;
 static char s_subtitle_text[16];
 
 // Menu items
-#define MENU_ITEM_CALENDAR 0
+#define MENU_ITEM_CALENDAR         0
 #define MENU_ITEM_DRIVER_STANDINGS 1
-#define MENU_ITEM_TEAM_STANDINGS 2
-#define NUM_MENU_ITEMS 3
+#define MENU_ITEM_TEAM_STANDINGS   2
+#define NUM_MENU_ITEMS             3
 
 // Menu layer callbacks
 static uint16_t get_num_rows_callback(MenuLayer *menu_layer,

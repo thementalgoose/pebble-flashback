@@ -210,6 +210,19 @@ function sendRacesToWatch(overviewData) {
     }, 100);
 }
 
+// Abbreviate a full event label to its shorthand code
+function abbreviateEvent(label) {
+    if (!label) return '';
+    if (/Free Practice 1|Practice 1/.test(label)) return 'FP1';
+    if (/Free Practice 2|Practice 2/.test(label)) return 'FP2';
+    if (/Free Practice 3|Practice 3/.test(label)) return 'FP3';
+    if (/Sprint Qualifying|Sprint Shootout/.test(label)) return 'SQ';
+    if (/Sprint/.test(label)) return 'SR';
+    if (/Qualifying/.test(label)) return 'Q';
+    if (/Race/.test(label)) return 'R';
+    return label.substring(0, 3);
+}
+
 // Process race details and send events to watch
 function sendRaceDetailsToWatch(overviewData, raceRound) {
     if (!overviewData || !overviewData.data) {
@@ -233,7 +246,7 @@ function sendRaceDetailsToWatch(overviewData, raceRound) {
     const eventLines = events.map(event => {
         // Combine date and time into ISO format
         const dateTimeStr = event.date + 'T' + event.time;
-        return `${event.label}|${dateTimeStr}`;
+        return `${abbreviateEvent(event.label)}|${dateTimeStr}`;
     });
 
     const eventsText = eventLines.join('\n');

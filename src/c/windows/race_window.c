@@ -123,23 +123,6 @@ static void race_inbox_received(DictionaryIterator *iterator, void *context) {
   }
 }
 
-// Map a full event label to its shorthand code
-static void abbreviate_event(const char *label, char *out, size_t out_size) {
-  if (!label || !out || out_size < 4) return;
-
-  if      (strstr(label, "Free Practice 1") || strstr(label, "Practice 1")) snprintf(out, out_size, "FP1");
-  else if (strstr(label, "Free Practice 2") || strstr(label, "Practice 2")) snprintf(out, out_size, "FP2");
-  else if (strstr(label, "Free Practice 3") || strstr(label, "Practice 3")) snprintf(out, out_size, "FP3");
-  else if (strstr(label, "Sprint Qualifying") || strstr(label, "Sprint Shootout")) snprintf(out, out_size, "SQ");
-  else if (strstr(label, "Sprint"))      snprintf(out, out_size, "SR");
-  else if (strstr(label, "Qualifying"))  snprintf(out, out_size, "Q");
-  else if (strstr(label, "Race"))        snprintf(out, out_size, "R");
-  else {
-    strncpy(out, label, 3);
-    out[3] = '\0';
-  }
-}
-
 // Menu layer callbacks
 static uint16_t get_num_rows_callback(MenuLayer *menu_layer,
                                       uint16_t section_index, void *context) {
@@ -170,10 +153,8 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     graphics_context_set_text_color(ctx, text_color);
 
     // Event shorthand code in fixed-width left column
-    char code[4];
-    abbreviate_event(event->label, code, sizeof(code));
     GRect code_rect = GRect(H_INSET, 2, EVENT_CODE_WIDTH, bounds.size.h - 4);
-    graphics_draw_text(ctx, code,
+    graphics_draw_text(ctx, event->label,
                       MENU_ROW_FONT,
                       code_rect,
                       GTextOverflowModeTrailingEllipsis,
