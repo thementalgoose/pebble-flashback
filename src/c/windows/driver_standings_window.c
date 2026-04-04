@@ -6,6 +6,14 @@
 
 #define MAX_DRIVERS 30
 
+#ifdef PBL_ROUND
+  #define H_INSET 16  // Horizontal inset to avoid circular bezel clipping rows
+  #define HDR_INSET 22 // Larger inset for header which sits near the top arc
+#else
+  #define H_INSET 4
+  #define HDR_INSET 4
+#endif
+
 static Window *s_window;
 static MenuLayer *s_menu_layer;
 static char s_header_text[32];
@@ -229,7 +237,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     }
 
     // Draw position and name on left using monospace-style font
-    GRect text_rect = GRect(4, 2, bounds.size.w - 50, bounds.size.h - 4);
+    GRect text_rect = GRect(H_INSET, 2, bounds.size.w - H_INSET - 46, bounds.size.h - 4);
     graphics_draw_text(ctx, row_text,
                       fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
                       text_rect,
@@ -240,7 +248,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     // Draw points on right
     char points_text[16];
     snprintf(points_text, sizeof(points_text), "%d", driver->points);
-    GRect points_rect = GRect(bounds.size.w - 46, 2, 42, bounds.size.h - 4);
+    GRect points_rect = GRect(bounds.size.w - 44 - H_INSET, 2, 42, bounds.size.h - 4);
     graphics_draw_text(ctx, points_text,
                       fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
                       points_rect,
@@ -263,7 +271,7 @@ static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
   graphics_context_set_text_color(ctx, GColorBlack);
 
   // Draw "Flashback" centered at top
-  GRect title_rect = GRect(0, 0, bounds.size.w, 28);
+  GRect title_rect = GRect(HDR_INSET, 0, bounds.size.w - 2 * HDR_INSET, 20);
   graphics_draw_text(ctx, "Flashback",
                     fonts_get_system_font(FONT_KEY_GOTHIC_14),
                     title_rect,
@@ -273,10 +281,10 @@ static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
 
   // Draw horizontal line under title
   graphics_context_set_stroke_color(ctx, GColorBlack);
-  graphics_draw_line(ctx, GPoint(4, 20), GPoint(bounds.size.w - 4, 20));
+  graphics_draw_line(ctx, GPoint(HDR_INSET, 20), GPoint(bounds.size.w - HDR_INSET, 20));
 
   // Draw "Drivers" on left and year on right
-  GRect subtitle_left = GRect(4, 22, 80, 14);
+  GRect subtitle_left = GRect(HDR_INSET, 22, 80, 14);
   graphics_draw_text(ctx, "Drivers",
                     fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
                     subtitle_left,
@@ -284,7 +292,7 @@ static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
                     GTextAlignmentLeft,
                     NULL);
 
-  GRect subtitle_right = GRect(bounds.size.w - 80, 22, 76, 14);
+  GRect subtitle_right = GRect(bounds.size.w - 80 - HDR_INSET, 22, 76, 14);
   graphics_draw_text(ctx, s_subtitle_text,
                     fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
                     subtitle_right,
@@ -312,6 +320,12 @@ static void window_load(Window *window) {
   // Create menu layer (full screen, no status bar)
   s_menu_layer = menu_layer_create(bounds);
   menu_layer_set_click_config_onto_window(s_menu_layer, window);
+
+#ifdef PBL_ROUND
+  // On round displays, centre the focused row so the selected item always
+  // sits in the widest part of the circle, with minimal clipping.
+  menu_layer_set_center_focused(s_menu_layer, true);
+#endif
 
   // Set black/white highlight for selected row
   menu_layer_set_highlight_colors(s_menu_layer, GColorBlack, GColorWhite);
