@@ -369,6 +369,93 @@ function sendTeamStandingsToWatch(standingsData) {
     });
 }
 
+// Push a single timeline pin to the Rebble timeline API
+function pushPin(token, pin) {
+    return new Promise((resolve, reject) => {
+        var xhr = new XMLHttpRequest();
+        xhr.open('PUT', 'https://timeline-api.rebble.io/v1/user/pins/' + pin.id, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-User-Token', token);
+        xhr.onload = function() {
+            if (xhr.status === 200 || xhr.status === 201) {
+                resolve();
+            } else {
+                reject(new Error('Timeline API error: ' + xhr.status));
+            }
+        };
+        xhr.onerror = function() {
+            reject(new Error('Network error pushing pin'));
+        };
+        xhr.send(JSON.stringify(pin));
+    });
+}
+
+// Push timeline pins for all upcoming race events in the current season
+function pushTimelinePins() {
+    var season = getCurrentSeason();
+    console.log('Pushing timeline pins for season:', season);
+
+    Pebble.getTimelineToken(function(token) {
+        fetchOverview(season).then(function(overviewData) {
+            if (!overviewData || !overviewData.data) {
+                console.error('Invalid overview data for timeline pins');
+                return;
+            }
+
+            var now = new Date();
+            var allRaces = Object.values(overviewData.data);
+
+            // Only consider races that haven't fully passed
+            var upcomingRaces = allRaces.filter(function(race) {
+                return new Date(race.date) >= now;
+            });
+
+            var pins = [];
+            upcomingRaces.forEach(function(race) {
+                var events = race.schedule || [];
+                events.forEach(function(event) {
+                    var dateTimeStr = event.date + 'T' + event.time;
+                    var eventTime = new Date(dateTimeStr);
+
+                    // Skip events that have already passed
+                    if (eventTime < now) return;
+
+                    var abbrev = abbreviateEvent(event.label);
+                    var location = race.circuit.city + ', ' + race.circuit.country;
+                    pins.push({
+                        id: 'f1-flashback-' + season + '-r' + race.round + '-' + abbrev.toLowerCase(),
+                        time: eventTime.toISOString(),
+                        layout: {
+                            type: 'genericPin',
+                            title:  event.label,
+                            tinyIcon: 'system://images/TIMELINE_CALENDAR',
+                            body: race.name + ' \u2022 ' + location
+                        }
+                    });
+                });
+            });
+
+            // Push pins sequentially to avoid overwhelming the API
+            pins.reduce(function(chain, pin) {
+                return chain.then(function() {
+                    return pushPin(token, pin).then(function() {
+                        console.log('Pushed pin:', pin.id);
+                    });
+                });
+            }, Promise.resolve()).then(function() {
+                console.log('All timeline pins pushed successfully');
+            }).catch(function(err) {
+                console.error('Error pushing timeline pins:', err);
+            });
+
+        }).catch(function(err) {
+            console.error('Failed to fetch overview for timeline pins:', err);
+        });
+    }, function(err) {
+        console.error('Failed to get timeline token:', err);
+    });
+}
+
 // Current season helper
 function getCurrentSeason() {
     return new Date().getFullYear();
@@ -426,11 +513,8 @@ Pebble.addEventListener('ready', function () {
     console.log('PebbleKit JS ready!');
     console.log('Current season:', getCurrentSeason());
 
-    // Send a ready message to the watch to confirm JS is running
-    // This helps debug connectivity issues on real devices
-    setTimeout(function() {
-        console.log('Notifying watch that JS is ready');
-    }, 1000);
+    // Push timeline pins for upcoming events
+    pushTimelinePins();
 });
 
 Pebble.addEventListener('showConfiguration', function () {
