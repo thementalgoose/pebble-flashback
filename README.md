@@ -1,32 +1,3 @@
-<table align="center">
-  <tr>
-    <th>Pebble Classic</th>
-    <th>Pebble Time</th>
-    <th>Pebble Time Round</th>
-    <th>Pebble 2</th>
-    <th>Pebble 2 Duo</th>
-    <th>Pebble Time 2</th>
-    <th>Pebble Round 2</th>
-  </tr>
-  <tr>
-    <th>aplite</th>
-    <th>basalt</th>
-    <th>chalk</th>
-    <th>diorite</th>
-    <th>emery</th>
-    <th>flint</th>
-    <th>gabbro</th>
-  </tr>
-  <tr>
-    <td><img src="appstore/aplite/menu.png" width="140" /></td>
-    <td><img src="appstore/basalt/calendar.png" width="140" /></td>
-    <td><img src="appstore/chalk/calendar.png" width="140" /></td>
-    <td><img src="appstore/diorite/race.png" width="140" /></td>
-    <td><img src="appstore/emery/drivers.png" width="140" /></td>
-    <td><img src="appstore/flint/teams.png" width="140" /></td>
-  </tr>
-</table>
-
 <h1 align="center">Flashback for Pebble</h1>
 
 <p align="center">
@@ -34,6 +5,16 @@
   <a href="https://apps.rebble.io/en_US/application/6929da3470731e00092debea"><img src="https://img.shields.io/static/v1?label=Rebble%20App%20Listing&message=%20&logoColor=white&color=833FD6&style=flat"/></a>
   <a href="https://dev-portal.rebble.io/"><img src="https://img.shields.io/static/v1?label=Rebble%20Dev%20Portal&message=%20&logoColor=white&color=B84E2E&style=flat"/></a>
 </p>
+
+| Codename | Pebble name       | Menu | Calendar | Drivers |
+|----------|-------------------|------|----------|---------|
+| aplite   | Pebble Classic    | <img src="appstore/aplite/menu.png" width="120"/>  | <img src="appstore/aplite/race.png" width="120"/>  | <img src="appstore/aplite/drivers.png" width="120"/>  |
+| basalt   | Pebble Time       | <img src="appstore/basalt/menu.png" width="120"/>  | <img src="appstore/basalt/race.png" width="120"/>  | <img src="appstore/basalt/drivers.png" width="120"/>  |
+| chalk    | Pebble Time Round | <img src="appstore/chalk/menu.png" width="120"/>   | <img src="appstore/chalk/race.png" width="120"/>   | <img src="appstore/chalk/drivers.png" width="120"/>   |
+| diorite  | Pebble 2          | <img src="appstore/diorite/menu.png" width="120"/> | <img src="appstore/diorite/race.png" width="120"/> | <img src="appstore/diorite/drivers.png" width="120"/> |
+| emery    | Pebble 2 Duo      | <img src="appstore/emery/menu.png" width="120"/>   | <img src="appstore/emery/race.png" width="120"/>   | <img src="appstore/emery/drivers.png" width="120"/>   |
+| flint    | Pebble Time 2     | <img src="appstore/flint/menu.png" width="120"/>   | <img src="appstore/flint/race.png" width="120"/>   | <img src="appstore/flint/drivers.png" width="120"/>   |
+| gabbro   | Pebble Round 2    | <img src="appstore/gabbro/menu.png" width="120"/>  | <img src="appstore/gabbro/race.png" width="120"/>  | <img src="appstore/gabbro/drivers.png" width="120"/>  |
 
 Pebble watch app for the Flashback API 🎉
 
