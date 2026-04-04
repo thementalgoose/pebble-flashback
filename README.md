@@ -8,7 +8,6 @@
 
 | Codename | Pebble name       | Menu | Calendar | Drivers |
 |----------|-------------------|------|----------|---------|
-| aplite   | Pebble Classic    | <img src="appstore/aplite/menu.png" width="120"/>  | <img src="appstore/aplite/race.png" width="120"/>  | <img src="appstore/aplite/drivers.png" width="120"/>  |
 | basalt   | Pebble Time       | <img src="appstore/basalt/menu.png" width="120"/>  | <img src="appstore/basalt/race.png" width="120"/>  | <img src="appstore/basalt/drivers.png" width="120"/>  |
 | chalk    | Pebble Time Round | <img src="appstore/chalk/menu.png" width="120"/>   | <img src="appstore/chalk/race.png" width="120"/>   | <img src="appstore/chalk/drivers.png" width="120"/>   |
 | diorite  | Pebble 2          | <img src="appstore/diorite/menu.png" width="120"/> | <img src="appstore/diorite/race.png" width="120"/> | <img src="appstore/diorite/drivers.png" width="120"/> |
