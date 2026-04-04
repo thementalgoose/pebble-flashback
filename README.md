@@ -11,9 +11,9 @@
 | basalt   | Pebble Time       | <img src="appstore/basalt/menu.png" width="120"/>  | <img src="appstore/basalt/race.png" width="120"/>  | <img src="appstore/basalt/drivers.png" width="120"/>  |
 | chalk    | Pebble Time Round | <img src="appstore/chalk/menu.png" width="120"/>   | <img src="appstore/chalk/race.png" width="120"/>   | <img src="appstore/chalk/drivers.png" width="120"/>   |
 | diorite  | Pebble 2          | <img src="appstore/diorite/menu.png" width="120"/> | <img src="appstore/diorite/race.png" width="120"/> | <img src="appstore/diorite/drivers.png" width="120"/> |
-| emery    | Pebble 2 Duo      | <img src="appstore/emery/menu.png" width="144"/>   | <img src="appstore/emery/race.png" width="144"/>   | <img src="appstore/emery/drivers.png" width="144"/>   |
-| flint    | Pebble Time 2     | <img src="appstore/flint/menu.png" width="120"/>   | <img src="appstore/flint/race.png" width="120"/>   | <img src="appstore/flint/drivers.png" width="120"/>   |
-| gabbro   | Pebble Round 2    | <img src="appstore/gabbro/menu.png" width="120"/>  | <img src="appstore/gabbro/race.png" width="120"/>  | <img src="appstore/gabbro/drivers.png" width="120"/>  |
+| emery    | Pebble Time 2     | <img src="appstore/emery/menu.png" width="150"/>   | <img src="appstore/emery/race.png" width="150"/>   | <img src="appstore/emery/drivers.png" width="150"/>   |
+| flint    | Pebble 2 Duo      | <img src="appstore/flint/menu.png" width="120"/>   | <img src="appstore/flint/race.png" width="120"/>   | <img src="appstore/flint/drivers.png" width="120"/>   |
+| gabbro   | Pebble Round 2    | <img src="appstore/gabbro/menu.png" width="150"/>  | <img src="appstore/gabbro/race.png" width="150"/>  | <img src="appstore/gabbro/drivers.png" width="150"/>  |
 
 Pebble watch app for the Flashback API 🎉
 

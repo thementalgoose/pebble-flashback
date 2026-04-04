@@ -418,6 +418,7 @@ function pushTimelinePins() {
             var pins = [];
             upcomingRaces.forEach(function(race) {
                 var events = race.schedule || [];
+                
                 events.forEach(function(event) {
                     var dateTimeStr = event.date + 'T' + event.time;
                     var eventTime = new Date(dateTimeStr);
@@ -427,6 +428,7 @@ function pushTimelinePins() {
 
                     var abbrev = abbreviateEvent(event.label);
                     var location = race.circuit.city + ', ' + race.circuit.country;
+                
                     pins.push({
                         id: 'f1-flashback-' + season + '-r' + race.round + '-' + abbrev.toLowerCase(),
                         time: eventTime.toISOString(),
@@ -520,9 +522,10 @@ Pebble.addEventListener('ready', function () {
 
     // Push timeline pins only if enabled in settings
     var settings = JSON.parse(localStorage.getItem('clay-settings')) || {};
-    var timelinePinsEnabled = settings.TimelinePins || false;
+    var timelinePinsEnabled = settings.TIMELINE_PINS || false;
     if (timelinePinsEnabled) {
         try {
+            console.log('Pushing timeline pins');
             pushTimelinePins();
         } catch (err) {
             console.error('Failed to push timeline pins:', err);

@@ -31,7 +31,6 @@
     ],
     "messageKeys": [
       "REQUEST_TYPE",
-      "TimelinePins",
       "DATA_INDEX",
       "DATA_COUNT",
       "DATA_TITLE",
@@ -39,7 +38,8 @@
       "DATA_EXTRA",
       "DATA_ROUND",
       "DATA_POINTS",
-      "DATA_POSITION"
+      "DATA_POSITION",
+      "TIMELINE_PINS"
     ],
     "resources": {
       "media": [
