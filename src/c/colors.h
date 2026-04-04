@@ -5,13 +5,13 @@
 // Text colors for Black & White displays
 #ifdef PBL_COLOR
   #define TEXT_COLOR_UNSELECTED GColorBlack
-  #define TEXT_COLOR_SELECTED GColorBlack
-  #define HIGHLIGHT_BG GColorFromHEX(0x489bb0)
+  #define TEXT_COLOR_SELECTED GColorWhite
+  #define HIGHLIGHT_BG GColorVividCerulean
   #define SELECTED_ICON_LIGHT true
 #else
   #define TEXT_COLOR_UNSELECTED GColorBlack
   #define TEXT_COLOR_SELECTED GColorWhite
-  #define HIGHLIGHT_BG GColorFromHEX(0x000000)
+  #define HIGHLIGHT_BG GColorBlack
   #define SELECTED_ICON_LIGHT true
 #endif
 

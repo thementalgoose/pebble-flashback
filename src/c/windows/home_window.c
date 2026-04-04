@@ -9,9 +9,17 @@
 // Current season (will be set to current year)
 int g_current_season = 2025;
 
+#ifdef PBL_ROUND
+  #define H_INSET 16
+  #define HDR_INSET 22
+#else
+  #define H_INSET 4
+  #define HDR_INSET 4
+#endif
+
 static Window *s_window;
 static MenuLayer *s_menu_layer;
-static char s_season_text[16];
+static char s_subtitle_text[16];
 
 // Menu items
 #define MENU_ITEM_CALENDAR 0
@@ -27,7 +35,6 @@ static uint16_t get_num_rows_callback(MenuLayer *menu_layer,
 
 static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
                               MenuIndex *cell_index, void *context) {
-  // Get the icon and title for this row
   const char *title = NULL;
 
   switch (cell_index->row) {
@@ -42,13 +49,27 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     break;
   }
 
-  // Use Pebble's built-in drawing which handles icon inversion automatically
-  menu_cell_basic_draw(ctx, cell_layer, title, NULL, NULL);
+  GRect bounds = layer_get_bounds(cell_layer);
+  bool selected = menu_layer_is_index_selected(s_menu_layer, cell_index);
+
+  if (selected) {
+    graphics_context_set_fill_color(ctx, HIGHLIGHT_BG);
+    graphics_fill_rect(ctx, bounds, 0, GCornerNone);
+  }
+
+  graphics_context_set_text_color(ctx, selected ? TEXT_COLOR_SELECTED : TEXT_COLOR_UNSELECTED);
+  GRect text_rect = GRect(H_INSET, 2, bounds.size.w - 2 * H_INSET, bounds.size.h - 4);
+  graphics_draw_text(ctx, title,
+                    fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
+                    text_rect,
+                    GTextOverflowModeTrailingEllipsis,
+                    GTextAlignmentLeft,
+                    NULL);
 }
 
 static int16_t get_cell_height_callback(struct MenuLayer *menu_layer,
                                         MenuIndex *cell_index, void *context) {
-  return 44; // Taller cells for easier touch
+  return 28;
 }
 
 static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
@@ -71,23 +92,41 @@ static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
 
 static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
                                  uint16_t section_index, void *context) {
-  // Draw season header centered on round displays
   GRect bounds = layer_get_bounds(cell_layer);
-  GTextAlignment alignment =
-      PBL_IF_ROUND_ELSE(GTextAlignmentCenter, GTextAlignmentLeft);
+  graphics_context_set_text_color(ctx, GColorBlack);
 
-  graphics_context_set_text_color(ctx, TEXT_COLOR_UNSELECTED);
-  graphics_draw_text(
-      ctx, s_season_text, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
-      GRect(PBL_IF_ROUND_ELSE(0, 5), 0, bounds.size.w - PBL_IF_ROUND_ELSE(0, 5),
-            bounds.size.h),
-      GTextOverflowModeTrailingEllipsis, alignment, NULL);
+  GRect title_rect = GRect(HDR_INSET, 0, bounds.size.w - 2 * HDR_INSET, 20);
+  graphics_draw_text(ctx, "Flashback",
+                    fonts_get_system_font(FONT_KEY_GOTHIC_14),
+                    title_rect,
+                    GTextOverflowModeTrailingEllipsis,
+                    GTextAlignmentCenter,
+                    NULL);
+
+  graphics_context_set_stroke_color(ctx, GColorBlack);
+  graphics_draw_line(ctx, GPoint(HDR_INSET, 20), GPoint(bounds.size.w - HDR_INSET, 20));
+
+  GRect subtitle_left = GRect(HDR_INSET, 22, 80, 14);
+  graphics_draw_text(ctx, "Season",
+                    fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
+                    subtitle_left,
+                    GTextOverflowModeTrailingEllipsis,
+                    GTextAlignmentLeft,
+                    NULL);
+
+  GRect subtitle_right = GRect(bounds.size.w - 80 - HDR_INSET, 22, 76, 14);
+  graphics_draw_text(ctx, s_subtitle_text,
+                    fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD),
+                    subtitle_right,
+                    GTextOverflowModeTrailingEllipsis,
+                    GTextAlignmentRight,
+                    NULL);
 }
 
 static int16_t get_header_height_callback(struct MenuLayer *menu_layer,
                                           uint16_t section_index,
                                           void *context) {
-  return MENU_CELL_BASIC_HEADER_HEIGHT;
+  return 42;
 }
 
 static uint16_t get_num_sections_callback(struct MenuLayer *menu_layer,
@@ -104,8 +143,11 @@ static void window_load(Window *window) {
   s_menu_layer = menu_layer_create(bounds);
   menu_layer_set_click_config_onto_window(s_menu_layer, window);
 
-  // Set custom color highlight on color displays
-  menu_layer_set_highlight_colors(s_menu_layer, HIGHLIGHT_BG, GColorWhite);
+#ifdef PBL_ROUND
+  menu_layer_set_center_focused(s_menu_layer, true);
+#endif
+
+  menu_layer_set_highlight_colors(s_menu_layer, HIGHLIGHT_BG, TEXT_COLOR_SELECTED);
 
   // Set callbacks
   menu_layer_set_callbacks(s_menu_layer, NULL,
@@ -121,8 +163,7 @@ static void window_load(Window *window) {
 
   layer_add_child(window_layer, menu_layer_get_layer(s_menu_layer));
 
-  // Set season text
-  snprintf(s_season_text, sizeof(s_season_text), "%d Season", g_current_season);
+  snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d", g_current_season);
 }
 
 static void window_unload(Window *window) {

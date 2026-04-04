@@ -161,11 +161,11 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     bool selected = menu_layer_is_index_selected(s_menu_layer, cell_index);
 
     if (selected) {
-      graphics_context_set_fill_color(ctx, GColorBlack);
+      graphics_context_set_fill_color(ctx, HIGHLIGHT_BG);
       graphics_fill_rect(ctx, bounds, 0, GCornerNone);
     }
 
-    GColor text_color = selected ? GColorWhite : GColorBlack;
+    GColor text_color = selected ? TEXT_COLOR_SELECTED : TEXT_COLOR_UNSELECTED;
     graphics_context_set_text_color(ctx, text_color);
 
     // "1  TeamName" (extra space for single-digit alignment)
@@ -260,7 +260,7 @@ static void window_load(Window *window) {
   menu_layer_set_center_focused(s_menu_layer, true);
 #endif
 
-  menu_layer_set_highlight_colors(s_menu_layer, GColorBlack, GColorWhite);
+  menu_layer_set_highlight_colors(s_menu_layer, HIGHLIGHT_BG, TEXT_COLOR_SELECTED);
 
   // Set callbacks
   menu_layer_set_callbacks(s_menu_layer, NULL,
