@@ -514,7 +514,11 @@ Pebble.addEventListener('ready', function () {
     console.log('Current season:', getCurrentSeason());
 
     // Push timeline pins for upcoming events
-    pushTimelinePins();
+    // try { 
+    //     pushTimelinePins();
+    // } catch (err) { 
+    //     console.error('Failed to push timeline pins:', err);
+    // }
 });
 
 Pebble.addEventListener('showConfiguration', function () {
