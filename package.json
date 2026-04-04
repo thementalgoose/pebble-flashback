@@ -31,6 +31,7 @@
     ],
     "messageKeys": [
       "REQUEST_TYPE",
+      "TimelinePins",
       "DATA_INDEX",
       "DATA_COUNT",
       "DATA_TITLE",
@@ -47,26 +48,6 @@
           "name": "MENU_ICON",
           "file": "images/menuicon.png",
           "menuIcon": true
-        },
-        {
-          "type": "font",
-          "name": "ROBOTO_MONO_LIGHT_14",
-          "file": "fonts/RobotoMono-Light.ttf"
-        },
-        {
-          "type": "font",
-          "name": "ROBOTO_MONO_LIGHT_18",
-          "file": "fonts/RobotoMono-Light.ttf"
-        },
-        {
-          "type": "font",
-          "name": "ROBOTO_MONO_MEDIUM_14",
-          "file": "fonts/RobotoMono-Medium.ttf"
-        },
-        {
-          "type": "font",
-          "name": "ROBOTO_MONO_MEDIUM_18",
-          "file": "fonts/RobotoMono-Medium.ttf"
         }
       ]
     }

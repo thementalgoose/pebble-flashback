@@ -4,6 +4,11 @@
 const CACHE_DURATION = 1000 * 60 * 60 * 12; // 12 hours
 const BASE_URL = 'https://flashback.pages.dev';
 
+// Clay configuration
+var Clay = require('@rebble/clay');
+var clayConfig = require('./config');
+var clay = new Clay(clayConfig);
+
 // Import auto-generated message keys
 var messageKeys = require('message_keys');
 console.log('Message keys loaded:', JSON.stringify(messageKeys));
@@ -513,20 +518,16 @@ Pebble.addEventListener('ready', function () {
     console.log('PebbleKit JS ready!');
     console.log('Current season:', getCurrentSeason());
 
-    // Push timeline pins for upcoming events
-    try { 
-        pushTimelinePins();
-    } catch (err) { 
-        console.error('Failed to push timeline pins:', err);
+    // Push timeline pins only if enabled in settings
+    var settings = JSON.parse(localStorage.getItem('clay-settings')) || {};
+    var timelinePinsEnabled = settings.TimelinePins || false;
+    if (timelinePinsEnabled) {
+        try {
+            pushTimelinePins();
+        } catch (err) {
+            console.error('Failed to push timeline pins:', err);
+        }
     }
-});
-
-Pebble.addEventListener('showConfiguration', function () {
-    console.log('Showing configuration (not implemented)');
-});
-
-Pebble.addEventListener('webviewclosed', function (e) {
-    console.log('Configuration closed');
 });
 
 console.log('F1 Flashback JS loaded');

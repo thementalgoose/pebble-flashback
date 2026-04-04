@@ -23,6 +23,7 @@ Pebble watch app for the Flashback API 🎉
 - [x] Race schedule view per race
 - [x] Drivers standings
 - [x] Teams standings
+- [x] Timeline pins
 
 #### Building
 

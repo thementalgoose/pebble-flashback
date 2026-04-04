@@ -11,6 +11,12 @@ module.exports = [
         "defaultValue": "Timeline Pins"
       },
       {
+        "type": "toggle",
+        "messageKey": "TimelinePins",
+        "label": "Enable Timeline Pins",
+        "defaultValue": false
+      },
+      {
         "type": "color",
         "messageKey": "BackgroundColor",
         "defaultValue": "0x000000",
