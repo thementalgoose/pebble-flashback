@@ -162,7 +162,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
                       NULL);
 
     // Compact date/time right-aligned
-    char compact_time[12];
+    char compact_time[13];
     utils_format_datetime_compact(event->datetime, compact_time, sizeof(compact_time));
     GRect time_rect = GRect(bounds.size.w - 80 - H_INSET, 2, 80, bounds.size.h - 4);
     graphics_draw_text(ctx, compact_time,
