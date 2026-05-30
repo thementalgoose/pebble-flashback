@@ -3,6 +3,9 @@
 
 const CACHE_DURATION = 1000 * 60 * 60 * 12; // 12 hours
 const BASE_URL = 'https://flashback.pages.dev';
+// Number of days to consider a race "upcoming" (configurable)
+// Default ~4 months = 120 days
+const UPCOMING_DAYS = 120;
 
 // Clay configuration
 var Clay = require('@rebble/clay');
@@ -158,9 +161,14 @@ function sendRacesToWatch(overviewData) {
     const allRaces = Object.values(overviewData.data);
     const now = new Date();
 
-    // Separate races into upcoming and past
-    const upcomingRaces = allRaces.filter(race => new Date(race.date) >= now)
-        .sort((a, b) => a.round - b.round); // Chronological order (earliest first)
+    // Determine cutoff for "upcoming" (now -> now + UPCOMING_DAYS)
+    const upcomingCutoff = new Date(now.getTime() + UPCOMING_DAYS * 24 * 60 * 60 * 1000);
+
+    // Separate races into upcoming (within the next UPCOMING_DAYS) and past
+    const upcomingRaces = allRaces.filter(race => {
+        const raceDate = new Date(race.date);
+        return raceDate >= now && raceDate <= upcomingCutoff;
+    }).sort((a, b) => a.round - b.round); // Chronological order (earliest first)
 
     const pastRaces = allRaces.filter(race => new Date(race.date) < now)
         .sort((a, b) => b.round - a.round); // Reverse chronological (most recent first)
