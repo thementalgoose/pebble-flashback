@@ -16,6 +16,7 @@ MenuLayer *flashback_screen_create_menu_layer(Window *window) {
   GRect bounds = layer_get_bounds(window_layer);
 
 #ifdef PBL_ROUND
+  window_set_background_color(window, HEADER_COLOR);
   if (!s_header_bg_layer) {
     s_header_bg_layer = layer_create(GRect(0, 0, bounds.size.w,
                                            MENU_HEADER_HEIGHT + 24));
