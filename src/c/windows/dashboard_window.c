@@ -189,7 +189,7 @@ static void draw_overview_row(GContext *ctx, const Layer *cell_layer,
   snprintf(round_text, sizeof(round_text), "Round %d", s_race_round);
 
   char datetime_text[64];
-  utils_format_datetime(s_race_datetime, datetime_text, sizeof(datetime_text));
+  utils_format_datetime_preferred(s_race_datetime, datetime_text, sizeof(datetime_text));
   if (datetime_text[0] == '\0') {
     snprintf(datetime_text, sizeof(datetime_text), "%s", s_race_datetime);
   }

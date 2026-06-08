@@ -163,9 +163,16 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
                       NULL);
 
     // Compact date/time right-aligned
+#if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
+    char compact_time[16];
+    utils_format_datetime_large(event->datetime, compact_time, sizeof(compact_time));
+    const int time_width = 104;
+#else
     char compact_time[13];
     utils_format_datetime_compact(event->datetime, compact_time, sizeof(compact_time));
-    GRect time_rect = GRect(bounds.size.w - 80 - H_INSET, 2, 80, bounds.size.h - 4);
+    const int time_width = 80;
+#endif
+    GRect time_rect = GRect(bounds.size.w - time_width - H_INSET, 2, time_width, bounds.size.h - 4);
     graphics_draw_text(ctx, compact_time,
                       MENU_ROW_FONT,
                       time_rect,
