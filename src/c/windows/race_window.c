@@ -208,6 +208,7 @@ static void window_load(Window *window) {
 static void window_unload(Window *window) {
   menu_layer_destroy(s_menu_layer);
   s_menu_layer = NULL;
+  flashback_screen_destroy_header_background();
 }
 
 void race_window_push(int race_index, const char *race_name) {
