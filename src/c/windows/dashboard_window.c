@@ -15,13 +15,16 @@
 #define DASHBOARD_OVERVIEW_HEIGHT 72
 #define DASHBOARD_ICON_SIZE 14
 #define DASHBOARD_ICON_GAP 4
+#define DASHBOARD_LOADING_ANIM_MS 220
 
 static Window *s_window;
 static MenuLayer *s_menu_layer;
 static AppTimer *s_overview_retry_timer;
+static AppTimer *s_loading_timer;
 static char s_subtitle_text[32];
 
 static bool s_overview_loaded = false;
+static uint8_t s_loading_phase = 0;
 static int s_race_round = 0;
 static char s_race_name[MAX_TITLE_LENGTH] = "";
 static char s_race_datetime[64] = "";
@@ -80,10 +83,27 @@ static void dashboard_overview_received(const char *overview_text) {
     app_timer_cancel(s_overview_retry_timer);
     s_overview_retry_timer = NULL;
   }
+  if (s_loading_timer) {
+    app_timer_cancel(s_loading_timer);
+    s_loading_timer = NULL;
+  }
 
   if (s_menu_layer) {
     menu_layer_reload_data(s_menu_layer);
   }
+}
+
+static void loading_animation_tick(void *context) {
+  s_loading_timer = NULL;
+
+  if (s_overview_loaded || !s_menu_layer) {
+    return;
+  }
+
+  s_loading_phase = (s_loading_phase + 1) % 3;
+  menu_layer_reload_data(s_menu_layer);
+  s_loading_timer = app_timer_register(DASHBOARD_LOADING_ANIM_MS,
+                                       loading_animation_tick, NULL);
 }
 
 static void request_overview_retry(void *context) {
@@ -93,6 +113,30 @@ static void request_overview_retry(void *context) {
     APP_LOG(APP_LOG_LEVEL_INFO, "Retrying dashboard overview request");
     message_handler_request_overview();
   }
+}
+
+static void start_loading_animation(void) {
+  if (s_loading_timer || s_overview_loaded || !s_menu_layer) {
+    return;
+  }
+
+  s_loading_phase = 0;
+  s_loading_timer = app_timer_register(DASHBOARD_LOADING_ANIM_MS,
+                                       loading_animation_tick, NULL);
+}
+
+static void draw_loading_dot(GContext *ctx, int x, int y, bool active) {
+  const char *dot = ".";
+  const int dot_width = 10;
+  const int dot_height = 14;
+  GRect dot_rect = GRect(x - dot_width / 2, y - dot_height / 2 - (active ? 2 : 0),
+                         dot_width, dot_height);
+  graphics_draw_text(ctx, dot,
+                     MENU_HEADER_SUBTITLE_FONT,
+                     dot_rect,
+                     GTextOverflowModeWordWrap,
+                     GTextAlignmentCenter,
+                     NULL);
 }
 
 static uint16_t get_num_rows_callback(MenuLayer *menu_layer,
@@ -131,7 +175,13 @@ static void draw_overview_row(GContext *ctx, const Layer *cell_layer,
                                   selected ? TEXT_COLOR_SELECTED : TEXT_COLOR_UNSELECTED);
 
   if (!s_overview_loaded) {
-    menu_cell_basic_draw(ctx, cell_layer, "Loading upcoming race...", NULL, NULL);
+    const int center_x = bounds.size.w / 2;
+    const int center_y = bounds.size.h / 2 + 1;
+    const int phase = s_loading_phase;
+
+    for (int i = 0; i < 3; i++) {
+      draw_loading_dot(ctx, center_x - 8 + (i * 8), center_y, i == phase);
+    }
     return;
   }
 
@@ -252,6 +302,12 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
                             void *context) {
   switch (cell_index->row) {
+  case 0:
+    if (s_overview_loaded) {
+      APP_LOG(APP_LOG_LEVEL_INFO, "Opening race window for round %d", s_race_round);
+      race_window_push(s_race_round, s_race_name);
+    }
+    break;
   case 1:
     APP_LOG(APP_LOG_LEVEL_INFO, "Calendar selected from dashboard");
     calendar_window_push();
@@ -296,6 +352,7 @@ static void window_load(Window *window) {
     if (!s_overview_retry_timer) {
       s_overview_retry_timer = app_timer_register(500, request_overview_retry, NULL);
     }
+    start_loading_animation();
   }
 }
 
@@ -334,6 +391,10 @@ void dashboard_window_destroy(void) {
   if (s_overview_retry_timer) {
     app_timer_cancel(s_overview_retry_timer);
     s_overview_retry_timer = NULL;
+  }
+  if (s_loading_timer) {
+    app_timer_cancel(s_loading_timer);
+    s_loading_timer = NULL;
   }
   message_handler_set_overview_message_callback(NULL);
 }
