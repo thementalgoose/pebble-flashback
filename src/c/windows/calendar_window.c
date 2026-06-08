@@ -121,15 +121,15 @@ static void update_initial_selection(void) {
     return;
   }
 
-  if (s_selected_row < 0 || s_selected_row >= s_race_count) {
-    s_selected_row = 0;
-  }
+  // if (s_selected_row < 0 || s_selected_row >= s_race_count) {
+  //   s_selected_row = 0;
+  // }
 
-  MenuIndex index = {
-      .section = 0,
-      .row = (uint16_t)s_selected_row,
-  };
-  menu_layer_set_selected_index(s_menu_layer, index, MenuRowAlignCenter, false);
+  // MenuIndex index = {
+  //     .section = 0,
+  //     .row = (uint16_t)s_selected_row,
+  // };
+  // menu_layer_set_selected_index(s_menu_layer, index, MenuRowAlignCenter, false);
 }
 
 // Parse pipe-delimited race data
@@ -214,7 +214,7 @@ static void parse_race_data(const char *data) {
     s_race_count++;
   }
 
-  s_selected_row = find_upcoming_race_index();
+  // s_selected_row = find_upcoming_race_index();
   s_data_loaded = true;
   APP_LOG(APP_LOG_LEVEL_INFO, "Parsed %d races from data", s_race_count);
 }
