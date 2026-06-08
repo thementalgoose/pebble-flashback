@@ -8,39 +8,145 @@
 #include "race_window.h"
 #include <pebble.h>
 
-#define MAX_UPCOMING_RACES 15
-#define MAX_PAST_RACES 15
+#define MAX_RACES 32
 
 static Window *s_window;
 static MenuLayer *s_menu_layer;
 static char s_subtitle_text[16];
 
 // Race data storage
-static Race s_upcoming_races[MAX_UPCOMING_RACES];
-static Race s_past_races[MAX_PAST_RACES];
-static int s_upcoming_count = 0;
-static int s_past_count = 0;
-static bool s_upcoming_loaded = false;
-static bool s_past_loaded = false;
+static Race s_races[MAX_RACES];
+static int s_race_count = 0;
+static int s_selected_row = -1;
+static bool s_data_loaded = false;
 
-// Section indices
-#define SECTION_UPCOMING 0
-#define SECTION_PREVIOUS 1
+static void update_initial_selection(void);
+
+static bool parse_iso_date(const char *iso_date, int *year, int *month, int *day) {
+  if (!iso_date || !year || !month || !day) {
+    return false;
+  }
+
+  if (strlen(iso_date) < 10) {
+    return false;
+  }
+
+  char year_str[5] = {0};
+  char month_str[3] = {0};
+  char day_str[3] = {0};
+
+  strncpy(year_str, iso_date, 4);
+  strncpy(month_str, iso_date + 5, 2);
+  strncpy(day_str, iso_date + 8, 2);
+
+  *year = atoi(year_str);
+  *month = atoi(month_str);
+  *day = atoi(day_str);
+
+  return *year > 0 && *month > 0 && *day > 0;
+}
+
+static bool iso_date_to_key(const char *iso_date, int *key) {
+  int year = 0;
+  int month = 0;
+  int day = 0;
+
+  if (!parse_iso_date(iso_date, &year, &month, &day) || !key) {
+    return false;
+  }
+
+  *key = year * 10000 + month * 100 + day;
+  return true;
+}
+
+static bool is_race_today_or_future(const char *race_date, const char *today_date) {
+  int race_key = 0;
+  int today_key = 0;
+
+  if (!iso_date_to_key(race_date, &race_key) ||
+      !iso_date_to_key(today_date, &today_key)) {
+    return false;
+  }
+
+  return race_key >= today_key;
+}
+
+static void get_today_date(char *output, size_t output_size) {
+  if (!output || output_size < 11) {
+    return;
+  }
+
+  time_t now = time(NULL);
+  struct tm *local_tm = localtime(&now);
+  if (!local_tm) {
+    output[0] = '\0';
+    return;
+  }
+
+  int year = local_tm->tm_year + 1900;
+  int month = local_tm->tm_mon + 1;
+  int day = local_tm->tm_mday;
+
+  output[0] = '0' + ((year / 1000) % 10);
+  output[1] = '0' + ((year / 100) % 10);
+  output[2] = '0' + ((year / 10) % 10);
+  output[3] = '0' + (year % 10);
+  output[4] = '-';
+  output[5] = '0' + (month / 10);
+  output[6] = '0' + (month % 10);
+  output[7] = '-';
+  output[8] = '0' + (day / 10);
+  output[9] = '0' + (day % 10);
+  output[10] = '\0';
+}
+
+static int find_upcoming_race_index(void) {
+  char today_date[11] = {0};
+  get_today_date(today_date, sizeof(today_date));
+  if (!today_date[0]) {
+    return s_race_count > 0 ? 0 : -1;
+  }
+
+  for (int i = 0; i < s_race_count; i++) {
+    if (is_race_today_or_future(s_races[i].date, today_date)) {
+      return i;
+    }
+  }
+
+  return s_race_count > 0 ? s_race_count - 1 : -1;
+}
+
+static void update_initial_selection(void) {
+  if (!s_menu_layer || !s_data_loaded || s_race_count <= 0) {
+    return;
+  }
+
+  // if (s_selected_row < 0 || s_selected_row >= s_race_count) {
+  //   s_selected_row = 0;
+  // }
+
+  // MenuIndex index = {
+  //     .section = 0,
+  //     .row = (uint16_t)s_selected_row,
+  // };
+  // menu_layer_set_selected_index(s_menu_layer, index, MenuRowAlignCenter, false);
+}
 
 // Parse pipe-delimited race data
-static void parse_race_data(const char *data, Race *races, int *count, int max_count) {
-  if (!data || !races || !count) {
+static void parse_race_data(const char *data) {
+  if (!data) {
     return;
   }
 
   // Reset count
-  *count = 0;
+  s_race_count = 0;
+  s_selected_row = -1;
 
   const char *ptr = data;
   char line_buffer[256];
 
   // Parse each line manually
-  while (*ptr && *count < max_count) {
+  while (*ptr && s_race_count < MAX_RACES) {
     // Extract one line
     size_t line_len = 0;
     while (*ptr && *ptr != '\n' && line_len < sizeof(line_buffer) - 1) {
@@ -58,10 +164,11 @@ static void parse_race_data(const char *data, Race *races, int *count, int max_c
       continue;
     }
 
-    // Parse pipe-delimited fields: round|name|location
+    // Parse pipe-delimited fields: round|name|location|date
     char round_str[16] = {0};
     char name[64] = {0};
     char location[64] = {0};
+    char date[MAX_EXTRA_LENGTH] = {0};
 
     // Find first pipe (round|name)
     const char *pipe1 = strchr(line_buffer, '|');
@@ -70,6 +177,10 @@ static void parse_race_data(const char *data, Race *races, int *count, int max_c
     // Find second pipe (name|location)
     const char *pipe2 = strchr(pipe1 + 1, '|');
     if (!pipe2) continue;
+
+    // Find third pipe (location|date)
+    const char *pipe3 = strchr(pipe2 + 1, '|');
+    if (!pipe3) continue;
 
     // Extract round
     size_t round_len = pipe1 - line_buffer;
@@ -83,21 +194,29 @@ static void parse_race_data(const char *data, Race *races, int *count, int max_c
     strncpy(name, pipe1 + 1, name_len);
     name[name_len] = '\0';
 
-    // Extract location (rest of the line)
-    strncpy(location, pipe2 + 1, sizeof(location) - 1);
-    location[sizeof(location) - 1] = '\0';
+    // Extract location
+    size_t location_len = pipe3 - pipe2 - 1;
+    if (location_len >= sizeof(location)) location_len = sizeof(location) - 1;
+    strncpy(location, pipe2 + 1, location_len);
+    location[location_len] = '\0';
+
+    // Extract date (rest of the line)
+    strncpy(date, pipe3 + 1, sizeof(date) - 1);
+    date[sizeof(date) - 1] = '\0';
 
     // Store the data
-    races[*count].round = atoi(round_str);
-    snprintf(races[*count].name, sizeof(races[*count].name), "%s", name);
-    snprintf(races[*count].location, sizeof(races[*count].location), "%s", location);
-    races[*count].index = *count;
-    races[*count].date[0] = '\0'; // Not used in new format
+    s_races[s_race_count].round = atoi(round_str);
+    snprintf(s_races[s_race_count].name, sizeof(s_races[s_race_count].name), "%s", name);
+    snprintf(s_races[s_race_count].location, sizeof(s_races[s_race_count].location), "%s", location);
+    snprintf(s_races[s_race_count].date, sizeof(s_races[s_race_count].date), "%s", date);
+    s_races[s_race_count].index = s_race_count;
 
-    (*count)++;
+    s_race_count++;
   }
 
-  APP_LOG(APP_LOG_LEVEL_INFO, "Parsed %d races from data", *count);
+  // s_selected_row = find_upcoming_race_index();
+  s_data_loaded = true;
+  APP_LOG(APP_LOG_LEVEL_INFO, "Parsed %d races from data", s_race_count);
 }
 
 // Callback from message handler
@@ -123,15 +242,6 @@ static void calendar_inbox_received(DictionaryIterator *iterator, void *context)
     return;
   }
 
-  // Get the data index (0 = upcoming, 1 = past)
-  Tuple *index_tuple = dict_find(iterator, MESSAGE_KEY_DATA_INDEX);
-  if (!index_tuple) {
-    APP_LOG(APP_LOG_LEVEL_ERROR, "No index in calendar message");
-    return;
-  }
-
-  int data_index = index_tuple->value->int32;
-
   // Get the formatted race text
   Tuple *title_tuple = dict_find(iterator, MESSAGE_KEY_DATA_TITLE);
   if (!title_tuple) {
@@ -140,89 +250,54 @@ static void calendar_inbox_received(DictionaryIterator *iterator, void *context)
   }
 
   const char *race_text = title_tuple->value->cstring;
-  APP_LOG(APP_LOG_LEVEL_INFO, "Received calendar data (index %d, %d chars)", data_index, strlen(race_text));
+  APP_LOG(APP_LOG_LEVEL_INFO, "Received calendar data (%d chars)", strlen(race_text));
 
   // Parse the pipe-delimited data
-  if (data_index == 0) {
-    // Upcoming races
-    parse_race_data(race_text, s_upcoming_races, &s_upcoming_count, MAX_UPCOMING_RACES);
-    s_upcoming_loaded = true;
-  } else if (data_index == 1) {
-    // Past races
-    parse_race_data(race_text, s_past_races, &s_past_count, MAX_PAST_RACES);
-    s_past_loaded = true;
-  }
+  parse_race_data(race_text);
 
   // Reload the menu
   if (s_menu_layer) {
     menu_layer_reload_data(s_menu_layer);
+    update_initial_selection();
   }
 }
 
 // Menu layer callbacks
 static uint16_t get_num_sections_callback(struct MenuLayer *menu_layer,
                                           void *context) {
-  return 2; // Upcoming and Previous
+  return 1;
 }
 
 static uint16_t get_num_rows_callback(MenuLayer *menu_layer,
                                       uint16_t section_index, void *context) {
-  if (section_index == SECTION_UPCOMING) {
-    if (!s_upcoming_loaded) {
-      return 1; // Show loading
-    }
-    return s_upcoming_count > 0 ? s_upcoming_count : 1;
-  } else {
-    if (!s_past_loaded) {
-      return 1; // Show loading
-    }
-    return s_past_count > 0 ? s_past_count : 1;
+  if (!s_data_loaded) {
+    return 1; // Show loading
   }
+  return s_race_count > 0 ? s_race_count : 1;
 }
 
 static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
                                  uint16_t section_index, void *context) {
-  if (section_index == SECTION_UPCOMING) {
-    flashback_screen_draw_header(ctx, cell_layer, "Calendar", s_subtitle_text);
-  } else {
-    GRect bounds = layer_get_bounds(cell_layer);
-    graphics_context_set_text_color(ctx, GColorBlack);
-    GRect label_rect = GRect(HDR_INSET, 1, bounds.size.w - 2 * HDR_INSET, bounds.size.h - 2);
-    graphics_draw_text(ctx, "Previous",
-                      MENU_HEADER_SUBTITLE_FONT,
-                      label_rect,
-                      GTextOverflowModeTrailingEllipsis,
-                      GTextAlignmentLeft,
-                      NULL);
-  }
+  flashback_screen_draw_header(ctx, cell_layer, "Calendar", s_subtitle_text);
 }
 
 static int16_t get_header_height_callback(struct MenuLayer *menu_layer,
                                           uint16_t section_index,
                                           void *context) {
-  return (section_index == SECTION_UPCOMING) ? MENU_HEADER_HEIGHT : MENU_CELL_BASIC_HEADER_HEIGHT;
+  return MENU_HEADER_HEIGHT;
 }
 
 static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
                               MenuIndex *cell_index, void *context) {
   Race *race = NULL;
 
-  if (cell_index->section == SECTION_UPCOMING) {
-    if (!s_upcoming_loaded) {
-      menu_cell_basic_draw(ctx, cell_layer, "Loading...", NULL, NULL);
-      return;
-    }
-    if (cell_index->row < s_upcoming_count) {
-      race = &s_upcoming_races[cell_index->row];
-    }
-  } else {
-    if (!s_past_loaded) {
-      menu_cell_basic_draw(ctx, cell_layer, "Loading...", NULL, NULL);
-      return;
-    }
-    if (cell_index->row < s_past_count) {
-      race = &s_past_races[cell_index->row];
-    }
+  if (!s_data_loaded) {
+    menu_cell_basic_draw(ctx, cell_layer, "Loading...", NULL, NULL);
+    return;
+  }
+
+  if (cell_index->row < s_race_count) {
+    race = &s_races[cell_index->row];
   }
 
   if (race) {
@@ -266,14 +341,8 @@ static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
                             void *context) {
   Race *race = NULL;
 
-  if (cell_index->section == SECTION_UPCOMING) {
-    if (cell_index->row < s_upcoming_count) {
-      race = &s_upcoming_races[cell_index->row];
-    }
-  } else {
-    if (cell_index->row < s_past_count) {
-      race = &s_past_races[cell_index->row];
-    }
+  if (cell_index->row < s_race_count) {
+    race = &s_races[cell_index->row];
   }
 
   if (race) {
@@ -297,11 +366,14 @@ static void window_load(Window *window) {
                                .select_click = select_callback,
                            });
 
-  if (!s_upcoming_loaded || !s_past_loaded) {
+  if (!s_data_loaded) {
     message_handler_set_overview_callbacks(on_race_data_received,
                                            on_race_count_received);
     app_message_register_inbox_received(calendar_inbox_received);
     message_handler_request_overview();
+  } else {
+    menu_layer_reload_data(s_menu_layer);
+    update_initial_selection();
   }
 }
 
@@ -313,6 +385,7 @@ static void window_unload(Window *window) {
 
 static void window_appear(Window *window) {
   snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d", g_current_season);
+  update_initial_selection();
 }
 
 void calendar_window_push(void) {
@@ -335,8 +408,7 @@ void calendar_window_destroy(void) {
   }
 
   // Clear data
-  s_upcoming_loaded = false;
-  s_past_loaded = false;
-  s_upcoming_count = 0;
-  s_past_count = 0;
+  s_data_loaded = false;
+  s_race_count = 0;
+  s_selected_row = -1;
 }
