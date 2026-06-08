@@ -1,6 +1,6 @@
 #include "data_models.h"
 #include "message_handler.h"
-#include "windows/home_window.h"
+#include "windows/dashboard_window.h"
 #include <pebble.h>
 
 static void init(void) {
@@ -17,13 +17,13 @@ static void init(void) {
   // Initialize message handler
   message_handler_init();
 
-  // Push home window
-  home_window_push();
+  // Push dashboard window
+  dashboard_window_push();
 }
 
 static void deinit(void) {
   // Cleanup windows
-  home_window_destroy();
+  dashboard_window_destroy();
 
   // Cleanup message handler
   message_handler_deinit();

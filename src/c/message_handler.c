@@ -10,10 +10,23 @@ static DriverStandingsDataCallback s_driver_standings_data_callback = NULL;
 static DriverStandingsCompleteCallback s_driver_standings_complete_callback = NULL;
 static TeamStandingsDataCallback s_team_standings_data_callback = NULL;
 static TeamStandingsCompleteCallback s_team_standings_complete_callback = NULL;
+static OverviewMessageCallback s_overview_message_callback = NULL;
 
 // Message received handler
 static void inbox_received_callback(DictionaryIterator *iterator,
                                     void *context) {
+  Tuple *overview_tuple = dict_find(iterator, MESSAGE_KEY_OVERVIEW);
+  if (overview_tuple) {
+    const char *overview_text = overview_tuple->value->cstring;
+    APP_LOG(APP_LOG_LEVEL_INFO, "Received overview message (%d chars)",
+            (int)strlen(overview_text));
+
+    if (s_overview_message_callback) {
+      s_overview_message_callback(overview_text);
+    }
+    return;
+  }
+
   // Read request type
   Tuple *request_type_tuple = dict_find(iterator, MESSAGE_KEY_REQUEST_TYPE);
   if (!request_type_tuple) {
@@ -284,4 +297,9 @@ void message_handler_set_team_standings_callbacks(
     TeamStandingsDataCallback data_cb, TeamStandingsCompleteCallback complete_cb) {
   s_team_standings_data_callback = data_cb;
   s_team_standings_complete_callback = complete_cb;
+}
+
+void message_handler_set_overview_message_callback(
+    OverviewMessageCallback overview_cb) {
+  s_overview_message_callback = overview_cb;
 }

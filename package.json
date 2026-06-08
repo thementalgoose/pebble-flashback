@@ -39,6 +39,7 @@
       "DATA_ROUND",
       "DATA_POINTS",
       "DATA_POSITION",
+      "OVERVIEW",
       "TIMELINE_PINS"
     ],
     "resources": {
