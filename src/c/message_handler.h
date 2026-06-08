@@ -26,6 +26,7 @@ typedef void (*DriverStandingsCompleteCallback)(int count);
 typedef void (*TeamStandingsDataCallback)(int index, const char *name,
                                           int points, int position);
 typedef void (*TeamStandingsCompleteCallback)(int count);
+typedef void (*OverviewMessageCallback)(const char *overview_text);
 
 // Initialize message handler
 void message_handler_init(void);
@@ -49,3 +50,5 @@ void message_handler_set_driver_standings_callbacks(
     DriverStandingsCompleteCallback complete_cb);
 void message_handler_set_team_standings_callbacks(
     TeamStandingsDataCallback data_cb, TeamStandingsCompleteCallback complete_cb);
+void message_handler_set_overview_message_callback(
+    OverviewMessageCallback overview_cb);

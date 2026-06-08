@@ -142,6 +142,68 @@ void utils_format_datetime(const char *iso_datetime, char *output,
   output[out_pos] = '\0';
 }
 
+void utils_format_datetime_preferred(const char *iso_datetime, char *output,
+                                     size_t output_size) {
+  if (!iso_datetime || !output || output_size < 20) {
+    return;
+  }
+
+  time_t utc_epoch;
+  if (!iso_datetime_to_epoch_utc(iso_datetime, &utc_epoch)) {
+    output[0] = '\0';
+    return;
+  }
+
+  struct tm *local_tm = localtime(&utc_epoch);
+  if (!local_tm) {
+    output[0] = '\0';
+    return;
+  }
+
+  int month = local_tm->tm_mon + 1;
+  int day = local_tm->tm_mday;
+  int hour = local_tm->tm_hour;
+  int minute = local_tm->tm_min;
+  const char *month_abbr = utils_get_month_abbr(month);
+  size_t out_pos = 0;
+
+  for (size_t i = 0; month_abbr[i] && out_pos < output_size - 1; i++) {
+    output[out_pos++] = month_abbr[i];
+  }
+  output[out_pos++] = ' ';
+
+  if (day >= 10) {
+    output[out_pos++] = '0' + (day / 10);
+  }
+  output[out_pos++] = '0' + (day % 10);
+  output[out_pos++] = ',';
+  output[out_pos++] = ' ';
+
+  if (clock_is_24h_style()) {
+    output[out_pos++] = '0' + (hour / 10);
+    output[out_pos++] = '0' + (hour % 10);
+  } else {
+    const char *am_pm = hour >= 12 ? "PM" : "AM";
+    int display_hour = hour % 12;
+    if (display_hour == 0) {
+      display_hour = 12;
+    }
+
+    if (display_hour >= 10) {
+      output[out_pos++] = '0' + (display_hour / 10);
+    }
+    output[out_pos++] = '0' + (display_hour % 10);
+    output[out_pos++] = ' ';
+    output[out_pos++] = am_pm[0];
+    output[out_pos++] = am_pm[1];
+  }
+
+  output[out_pos++] = ':';
+  output[out_pos++] = '0' + (minute / 10);
+  output[out_pos++] = '0' + (minute % 10);
+  output[out_pos] = '\0';
+}
+
 void utils_format_date(const char *iso_date, char *output, size_t output_size) {
   if (!iso_date || !output || output_size < 15) {
     return;
@@ -205,4 +267,32 @@ void utils_format_datetime_compact(const char *iso_datetime, char *output,
   int minute = local_tm->tm_min;
 
   snprintf(output, output_size, "%02d/%02d %02d:%02d", day, month, hour, minute);
+}
+
+void utils_format_datetime_large(const char *iso_datetime, char *output,
+                                 size_t output_size) {
+  if (!iso_datetime || !output || output_size < 14) {
+    return;
+  }
+
+  time_t utc_epoch;
+  if (!iso_datetime_to_epoch_utc(iso_datetime, &utc_epoch)) {
+    output[0] = '\0';
+    return;
+  }
+
+  struct tm *local_tm = localtime(&utc_epoch);
+  if (!local_tm) {
+    output[0] = '\0';
+    return;
+  }
+
+  int month = local_tm->tm_mon + 1;
+  int day = local_tm->tm_mday;
+  int hour = local_tm->tm_hour;
+  int minute = local_tm->tm_min;
+  const char *month_abbr = utils_get_month_abbr(month);
+
+  snprintf(output, output_size, "%s %d, %02d:%02d",
+           month_abbr, day, hour, minute);
 }

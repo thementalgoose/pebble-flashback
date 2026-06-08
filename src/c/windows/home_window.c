@@ -104,6 +104,7 @@ static void window_load(Window *window) {
 
 static void window_unload(Window *window) {
   menu_layer_destroy(s_menu_layer);
+  flashback_screen_destroy_header_background();
 }
 
 void home_window_push(void) {

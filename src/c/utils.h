@@ -8,6 +8,12 @@
 void utils_format_datetime(const char *iso_datetime, char *output,
                            size_t output_size);
 
+// Format datetime from ISO string using the device's 12/24h preference
+// Input: "2025-03-14T01:30:00Z"
+// Output: "Mar 14, 13:30" or "Mar 14, 1:30 PM"
+void utils_format_datetime_preferred(const char *iso_datetime, char *output,
+                                     size_t output_size);
+
 // Format date from ISO string
 // Input: "2025-03-14"
 // Output: "Mar 14, 2025"
@@ -21,3 +27,9 @@ const char *utils_get_month_abbr(int month);
 // Output: "12/07 18:30"
 void utils_format_datetime_compact(const char *iso_datetime, char *output,
                                    size_t output_size);
+
+// Format datetime from ISO string for larger displays
+// Input: "2025-07-12T18:30:00Z"
+// Output: "Jul 12, 18:30"
+void utils_format_datetime_large(const char *iso_datetime, char *output,
+                                 size_t output_size);

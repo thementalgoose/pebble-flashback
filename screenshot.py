@@ -30,6 +30,9 @@ PROJECT_DIR = Path(__file__).parent
 
 def run(cmd, check=True):
     print(f"  $ {' '.join(cmd)}")
+    print(f"  [debug] python executable: {sys.executable}")
+    whereis = subprocess.run(["whereis", "pebble"], capture_output=True, text=True)
+    print(f"  [debug] whereis pebble: {whereis.stdout.strip()}")
     result = subprocess.run(cmd, cwd=PROJECT_DIR)
     if check and result.returncode != 0:
         print(f"Command failed with exit code {result.returncode}", file=sys.stderr)

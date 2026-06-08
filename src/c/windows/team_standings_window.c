@@ -229,6 +229,7 @@ static void window_load(Window *window) {
 static void window_unload(Window *window) {
   menu_layer_destroy(s_menu_layer);
   s_menu_layer = NULL;
+  flashback_screen_destroy_header_background();
 }
 
 void team_standings_window_push(void) {

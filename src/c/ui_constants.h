@@ -19,22 +19,25 @@
 // Menu layout
 // ---------------------------------------------------------------------------
 #define MENU_CELL_HEIGHT    28
-#define MENU_HEADER_HEIGHT  42
+#define MENU_HEADER_HEIGHT  50
 // Fixed width reserved for the position number column (fits "20" in GOTHIC_18_BOLD)
 #define MENU_ROW_POS_WIDTH  22
 // Gap between position column and name
 #define MENU_ROW_POS_GAP    4
 
 // Pixel rows within the header cell
-#define MENU_HEADER_DIVIDER_Y  20
-#define MENU_HEADER_SUBTITLE_Y 22
+#define MENU_HEADER_TITLE_Y     4
+#define MENU_HEADER_SUBTITLE_Y  24
+#define MENU_HEADER_LOGO_SIZE   16
+#define MENU_HEADER_LOGO_GAP    8
+#define MENU_HEADER_RIGHT_WIDTH 40
 
 // ---------------------------------------------------------------------------
 // Fonts
 // ---------------------------------------------------------------------------
 #define MENU_ROW_FONT             fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD)
-#define MENU_HEADER_TITLE_FONT    fonts_get_system_font(FONT_KEY_GOTHIC_14)
-#define MENU_HEADER_SUBTITLE_FONT fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD)
+#define MENU_HEADER_TITLE_FONT    fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD)
+#define MENU_HEADER_SUBTITLE_FONT fonts_get_system_font(FONT_KEY_GOTHIC_14)
 // fonts_load_custom_font(resource_get_handle(RESOURCE_ID_ROBOTO_MONO_LIGHT_14))
 // fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD)
 

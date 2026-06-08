@@ -112,6 +112,28 @@ function fetchOverview(season) {
     });
 }
 
+function findRaceEvent(race) {
+    if (!race || !race.schedule || !race.schedule.length) {
+        return null;
+    }
+
+    var exactRace = race.schedule.find(function(event) {
+        return event.label && event.label.toLowerCase() === 'race';
+    });
+    if (exactRace) {
+        return exactRace;
+    }
+
+    var grandPrix = race.schedule.find(function(event) {
+        return event.label && event.label.toLowerCase().indexOf('grand prix') !== -1;
+    });
+    if (grandPrix) {
+        return grandPrix;
+    }
+
+    return race.schedule[race.schedule.length - 1];
+}
+
 function fetchStandings(season) {
     return new Promise((resolve, reject) => {
         // Check cache first
@@ -221,6 +243,43 @@ function sendRacesToWatch(overviewData) {
             console.error('Error details:', JSON.stringify(e));
         });
     }, 100);
+}
+
+function sendOverviewToWatch(overviewData) {
+    if (!overviewData || !overviewData.data) {
+        console.error('Invalid overview data for dashboard');
+        return;
+    }
+
+    const allRaces = Object.values(overviewData.data);
+    const now = new Date();
+
+    const upcomingRace = allRaces
+        .filter(race => new Date(race.date) >= now)
+        .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+
+    if (!upcomingRace) {
+        console.error('No upcoming race found for dashboard');
+        return;
+    }
+
+    const raceEvent = findRaceEvent(upcomingRace);
+    const date = raceEvent && raceEvent.date ? raceEvent.date : upcomingRace.date;
+    const time = raceEvent && raceEvent.time ? raceEvent.time : '00:00:00Z';
+    const dateTimeStr = `${date}T${time}`;
+    const overviewText = `${upcomingRace.round}|${upcomingRace.name}|${dateTimeStr}`;
+
+    console.log('Sending dashboard overview as single message');
+    console.log('Overview text length:', overviewText.length);
+
+    Pebble.sendAppMessage({
+        OVERVIEW: overviewText
+    }, function () {
+        console.log('Sent dashboard overview successfully');
+    }, function (e) {
+        console.error('Failed to send dashboard overview:', e);
+        console.error('Error details:', JSON.stringify(e));
+    });
 }
 
 // Abbreviate a full event label to its shorthand code
@@ -501,7 +560,10 @@ Pebble.addEventListener('appmessage', function (e) {
         case REQUEST_TYPES.GET_OVERVIEW:
             console.log('Request: GET_OVERVIEW');
             fetchOverview(season)
-                .then(data => sendRacesToWatch(data))
+                .then(data => {
+                    sendOverviewToWatch(data);
+                    sendRacesToWatch(data);
+                })
                 .catch(error => console.error('Failed to get overview:', error));
             break;
 

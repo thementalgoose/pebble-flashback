@@ -13,6 +13,7 @@
 
 static Window *s_window;
 static MenuLayer *s_menu_layer;
+static char s_subtitle_text[16];
 
 // Event data storage
 static RaceEvent s_events[MAX_EVENTS];
@@ -162,9 +163,16 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
                       NULL);
 
     // Compact date/time right-aligned
+#if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
+    char compact_time[16];
+    utils_format_datetime_large(event->datetime, compact_time, sizeof(compact_time));
+    const int time_width = 104;
+#else
     char compact_time[13];
     utils_format_datetime_compact(event->datetime, compact_time, sizeof(compact_time));
-    GRect time_rect = GRect(bounds.size.w - 80 - H_INSET, 2, 80, bounds.size.h - 4);
+    const int time_width = 80;
+#endif
+    GRect time_rect = GRect(bounds.size.w - time_width - H_INSET, 2, time_width, bounds.size.h - 4);
     graphics_draw_text(ctx, compact_time,
                       MENU_ROW_FONT,
                       time_rect,
@@ -178,7 +186,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 
 static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
                                  uint16_t section_index, void *context) {
-  flashback_screen_draw_header(ctx, cell_layer, s_race_name, NULL);
+  flashback_screen_draw_header(ctx, cell_layer, s_race_name, s_subtitle_text);
 }
 
 // Window lifecycle
@@ -207,6 +215,7 @@ static void window_load(Window *window) {
 static void window_unload(Window *window) {
   menu_layer_destroy(s_menu_layer);
   s_menu_layer = NULL;
+  flashback_screen_destroy_header_background();
 }
 
 void race_window_push(int race_index, const char *race_name) {
@@ -240,6 +249,8 @@ void race_window_push(int race_index, const char *race_name) {
     }
   }
 
+  snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d", g_current_season);
+
   if (!s_window) {
     s_window = window_create();
     window_set_window_handlers(s_window, (WindowHandlers){
@@ -260,4 +271,5 @@ void race_window_destroy(void) {
   s_data_loaded = false;
   s_event_count = 0;
   s_current_race_index = -1;
+  s_subtitle_text[0] = '\0';
 }
