@@ -181,68 +181,33 @@ function sendRacesToWatch(overviewData) {
     }
 
     const allRaces = Object.values(overviewData.data);
-    const now = new Date();
+    const races = allRaces
+        .slice()
+        .sort((a, b) => a.round - b.round);
 
-    // Determine cutoff for "upcoming" (now -> now + UPCOMING_DAYS)
-    const upcomingCutoff = new Date(now.getTime() + UPCOMING_DAYS * 24 * 60 * 60 * 1000);
+    console.log(`Formatting ${races.length} races`);
 
-    // Separate races into upcoming (within the next UPCOMING_DAYS) and past
-    const upcomingRaces = allRaces.filter(race => {
-        const raceDate = new Date(race.date);
-        return raceDate >= now && raceDate <= upcomingCutoff;
-    }).sort((a, b) => a.round - b.round); // Chronological order (earliest first)
-
-    const pastRaces = allRaces.filter(race => new Date(race.date) < now)
-        .sort((a, b) => b.round - a.round); // Reverse chronological (most recent first)
-
-    console.log(`Formatting ${upcomingRaces.length} upcoming and ${pastRaces.length} past races`);
-
-    // Build pipe-delimited strings for upcoming races
-    const upcomingLines = upcomingRaces.map(race => {
+    // Build pipe-delimited strings for all races in round order.
+    // Include the date so the watch can decide which race should be pre-selected.
+    const raceLines = races.map(race => {
         const location = `${race.circuit.city}, ${race.circuit.country}`;
-        return `${race.round}|${race.name}|${location}`;
+        return `${race.round}|${race.name}|${location}|${race.date}`;
     });
 
-    // Build pipe-delimited strings for past races
-    const pastLines = pastRaces.map(race => {
-        const location = `${race.circuit.city}, ${race.circuit.country}`;
-        return `${race.round}|${race.name}|${location}`;
-    });
+    const racesText = raceLines.join('\n');
 
-    const upcomingText = upcomingLines.join('\n');
-    const pastText = pastLines.join('\n');
+    console.log('Sending all races as a single message');
+    console.log('Races text length:', racesText.length);
 
-    console.log('Sending upcoming races as single message');
-    console.log('Upcoming text length:', upcomingText.length);
-
-    // Send upcoming races
     Pebble.sendAppMessage({
         REQUEST_TYPE: REQUEST_TYPES.GET_OVERVIEW,
-        DATA_INDEX: 0, // 0 = upcoming
-        DATA_TITLE: upcomingText
+        DATA_TITLE: racesText
     }, function () {
-        console.log('Sent upcoming races successfully');
+        console.log('Sent races successfully');
     }, function (e) {
-        console.error('Failed to send upcoming races:', e);
+        console.error('Failed to send races:', e);
         console.error('Error details:', JSON.stringify(e));
     });
-
-    console.log('Sending past races as single message');
-    console.log('Past text length:', pastText.length);
-
-    // Send past races (with a small delay to ensure ordering)
-    setTimeout(() => {
-        Pebble.sendAppMessage({
-            REQUEST_TYPE: REQUEST_TYPES.GET_OVERVIEW,
-            DATA_INDEX: 1, // 1 = past
-            DATA_TITLE: pastText
-        }, function () {
-            console.log('Sent past races successfully');
-        }, function (e) {
-            console.error('Failed to send past races:', e);
-            console.error('Error details:', JSON.stringify(e));
-        });
-    }, 100);
 }
 
 function sendOverviewToWatch(overviewData) {
