@@ -7,6 +7,9 @@
 // The caller is responsible for setting callbacks and calling menu_layer_destroy.
 MenuLayer *flashback_screen_create_menu_layer(Window *window);
 
+// Destroys any shared header background layer created by flashback_screen.
+void flashback_screen_destroy_header_background(void);
+
 // Draws the standard Flashback header: APP_TITLE centred at the top, a divider
 // line, then subtitle_left on the left. When subtitle_right is non-NULL it is
 // drawn right-aligned; otherwise subtitle_left spans the full available width.

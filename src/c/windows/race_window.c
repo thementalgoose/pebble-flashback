@@ -13,6 +13,7 @@
 
 static Window *s_window;
 static MenuLayer *s_menu_layer;
+static char s_subtitle_text[16];
 
 // Event data storage
 static RaceEvent s_events[MAX_EVENTS];
@@ -178,7 +179,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 
 static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
                                  uint16_t section_index, void *context) {
-  flashback_screen_draw_header(ctx, cell_layer, s_race_name, NULL);
+  flashback_screen_draw_header(ctx, cell_layer, s_race_name, s_subtitle_text);
 }
 
 // Window lifecycle
@@ -240,6 +241,8 @@ void race_window_push(int race_index, const char *race_name) {
     }
   }
 
+  snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d", g_current_season);
+
   if (!s_window) {
     s_window = window_create();
     window_set_window_handlers(s_window, (WindowHandlers){
@@ -260,4 +263,5 @@ void race_window_destroy(void) {
   s_data_loaded = false;
   s_event_count = 0;
   s_current_race_index = -1;
+  s_subtitle_text[0] = '\0';
 }

@@ -164,9 +164,9 @@ static void draw_overview_row(GContext *ctx, const Layer *cell_layer,
   }
 
   graphics_context_set_stroke_color(ctx, DIVIDER_COLOR);
-  graphics_draw_line(ctx,
-                     GPoint(H_INSET, 0),
-                     GPoint(bounds.size.w - H_INSET, 0));
+  // graphics_draw_line(ctx,
+  //                    GPoint(H_INSET, 0),
+  //                    GPoint(bounds.size.w - H_INSET, 0));
   graphics_draw_line(ctx,
                      GPoint(H_INSET, bounds.size.h - 1),
                      GPoint(bounds.size.w - H_INSET, bounds.size.h - 1));
