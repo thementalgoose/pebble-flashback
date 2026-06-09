@@ -11,7 +11,7 @@
 
 #define MAX_EVENTS 10
 // Width of the fixed event-code column (fits up to 3 chars e.g. "FP1")
-#define EVENT_CODE_WIDTH 28
+#define EVENT_CODE_WIDTH 40
 
 static Window *s_window;
 static MenuLayer *s_menu_layer;
@@ -163,7 +163,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     // Event shorthand code in fixed-width left column
     GRect code_rect = GRect(H_INSET, 2, EVENT_CODE_WIDTH, bounds.size.h - 4);
     graphics_draw_text(ctx, event->label,
-                      MENU_ROW_FONT,
+                      RACE_WINDOW_ROW_FONT,
                       code_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
@@ -181,7 +181,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 #endif
     GRect time_rect = GRect(bounds.size.w - time_width - H_INSET, 2, time_width, bounds.size.h - 4);
     graphics_draw_text(ctx, compact_time,
-                      MENU_ROW_FONT,
+                      RACE_WINDOW_ROW_FONT,
                       time_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentRight,
@@ -202,9 +202,9 @@ static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
     return;
   }
 
-  if (strcmp(label, "R") == 0) {
+  if (strcmp(label, "Race") == 0) {
     results_window_push(s_current_race_index);
-  } else if (strcmp(label, "Q") == 0) {
+  } else if (strcmp(label, "Quali") == 0) {
     results_qualifying_window_push(s_current_race_index);
   }
 }

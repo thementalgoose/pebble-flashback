@@ -31,6 +31,8 @@
 #define MENU_HEADER_LOGO_SIZE   16
 #define MENU_HEADER_LOGO_GAP    8
 #define MENU_HEADER_RIGHT_WIDTH 40
+#define MENU_HEADER_TITLE_HEIGHT 20
+#define MENU_HEADER_SUBTITLE_HEIGHT 24
 
 // ---------------------------------------------------------------------------
 // Fonts

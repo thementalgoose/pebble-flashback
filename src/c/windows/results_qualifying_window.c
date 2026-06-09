@@ -11,7 +11,7 @@
 static Window *s_window;
 static MenuLayer *s_menu_layer;
 static char s_subtitle_text[32];
-static char s_race_name[32] = "Qualifying Results";
+static char s_race_name[32] = "R1 Qualifying";
 
 // Qualifying results data storage
 static QualifyingResult s_results[MAX_RESULTS];
@@ -165,7 +165,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     snprintf(position_text, sizeof(position_text), "%d", result->position);
     GRect pos_rect = GRect(H_INSET, 2, MENU_ROW_POS_WIDTH, bounds.size.h - 4);
     graphics_draw_text(ctx, position_text,
-                      MENU_ROW_FONT,
+                      RESULTS_QUALIFYING_WINDOW_ROW_FONT,
                       pos_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
@@ -174,18 +174,18 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     char abbreviated_name[16];
     format_driver_name(result->name, abbreviated_name, sizeof(abbreviated_name));
     const int name_x = H_INSET + MENU_ROW_POS_WIDTH + MENU_ROW_POS_GAP;
-    const int secondary_width = 64;
+    const int secondary_width = 50;
     GRect text_rect = GRect(name_x, 2, bounds.size.w - name_x - secondary_width - H_INSET, bounds.size.h - 4);
     graphics_draw_text(ctx, abbreviated_name,
-                      MENU_ROW_FONT,
+                      RESULTS_QUALIFYING_WINDOW_ROW_FONT,
                       text_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
                       NULL);
 
-    GRect time_rect = GRect(bounds.size.w - secondary_width - H_INSET, 2, secondary_width, bounds.size.h - 4);
+    GRect time_rect = GRect(bounds.size.w - secondary_width - H_INSET, 4, secondary_width, bounds.size.h - 4);
     graphics_draw_text(ctx, result->time,
-                      MENU_ROW_SECONDARY_FONT,
+                      RESULTS_QUALIFYING_WINDOW_SECONDARY_FONT,
                       time_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentRight,
@@ -215,7 +215,7 @@ static void window_load(Window *window) {
 
   app_message_register_inbox_received(qualifying_inbox_received);
 
-  snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d R%d", g_current_season, s_current_race_round);
+  snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d", g_current_season);
 
   if (!s_data_loaded) {
     message_handler_request_qualifying_results(s_current_race_round);
@@ -231,6 +231,7 @@ static void window_unload(Window *window) {
 void results_qualifying_window_push(int race_round) {
   bool is_different_round = (race_round != s_current_race_round);
   s_current_race_round = race_round;
+  snprintf(s_race_name, sizeof(s_race_name), "R%d Qualifying", s_current_race_round);
   snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d R%d", g_current_season, s_current_race_round);
 
   if (is_different_round) {

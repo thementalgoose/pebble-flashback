@@ -11,7 +11,7 @@
 static Window *s_window;
 static MenuLayer *s_menu_layer;
 static char s_subtitle_text[32];
-static char s_race_name[32] = "Race Results";
+static char s_race_name[32] = "R1 Race";
 
 // Race results data storage
 static DriverStanding s_results[MAX_RESULTS];
@@ -165,7 +165,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     snprintf(position_text, sizeof(position_text), "%d", result->position);
     GRect pos_rect = GRect(H_INSET, 2, MENU_ROW_POS_WIDTH, bounds.size.h - 4);
     graphics_draw_text(ctx, position_text,
-                      MENU_ROW_FONT,
+                      RESULTS_RACE_WINDOW_ROW_FONT,
                       pos_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
@@ -177,7 +177,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     const int secondary_width = 42;
     GRect text_rect = GRect(name_x, 2, bounds.size.w - name_x - secondary_width - H_INSET, bounds.size.h - 4);
     graphics_draw_text(ctx, abbreviated_name,
-                      MENU_ROW_FONT,
+                      RESULTS_RACE_WINDOW_ROW_FONT,
                       text_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
@@ -185,9 +185,9 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 
     char points_text[16];
     snprintf(points_text, sizeof(points_text), "%d", result->points);
-    GRect points_rect = GRect(bounds.size.w - secondary_width - H_INSET, 2, secondary_width, bounds.size.h - 4);
+    GRect points_rect = GRect(bounds.size.w - secondary_width - H_INSET, 4, secondary_width, bounds.size.h - 4);
     graphics_draw_text(ctx, points_text,
-                      MENU_ROW_SECONDARY_FONT,
+                      RESULTS_RACE_WINDOW_SECONDARY_FONT,
                       points_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentRight,
@@ -217,7 +217,7 @@ static void window_load(Window *window) {
 
   app_message_register_inbox_received(results_inbox_received);
 
-  snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d R%d", g_current_season, s_current_race_round);
+  snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d", g_current_season);
 
   if (!s_data_loaded) {
     message_handler_request_race_results(s_current_race_round);
@@ -233,6 +233,7 @@ static void window_unload(Window *window) {
 void results_window_push(int race_round) {
   bool is_different_round = (race_round != s_current_race_round);
   s_current_race_round = race_round;
+  snprintf(s_race_name, sizeof(s_race_name), "R%d Race", s_current_race_round);
   snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d R%d", g_current_season, s_current_race_round);
 
   if (is_different_round) {

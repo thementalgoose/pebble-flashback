@@ -54,7 +54,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
   graphics_context_set_text_color(ctx, selected ? TEXT_COLOR_SELECTED : TEXT_COLOR_UNSELECTED);
   GRect text_rect = GRect(H_INSET, 2, bounds.size.w - 2 * H_INSET, bounds.size.h - 4);
   graphics_draw_text(ctx, title,
-                    MENU_ROW_FONT,
+                    HOME_WINDOW_ROW_FONT,
                     text_rect,
                     GTextOverflowModeTrailingEllipsis,
                     GTextAlignmentLeft,

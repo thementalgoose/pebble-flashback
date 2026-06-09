@@ -223,7 +223,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     snprintf(position_text, sizeof(position_text), "%d", driver->position);
     GRect pos_rect = GRect(H_INSET, 2, MENU_ROW_POS_WIDTH, bounds.size.h - 4);
     graphics_draw_text(ctx, position_text,
-                      MENU_ROW_FONT,
+                      DRIVER_STANDINGS_WINDOW_ROW_FONT,
                       pos_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
@@ -235,7 +235,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     const int name_x = H_INSET + MENU_ROW_POS_WIDTH + MENU_ROW_POS_GAP;
     GRect text_rect = GRect(name_x, 2, bounds.size.w - name_x - 46, bounds.size.h - 4);
     graphics_draw_text(ctx, abbreviated_name,
-                      MENU_ROW_FONT,
+                      DRIVER_STANDINGS_WINDOW_ROW_FONT,
                       text_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
@@ -246,7 +246,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     snprintf(points_text, sizeof(points_text), "%d", driver->points);
     GRect points_rect = GRect(bounds.size.w - 44 - H_INSET, 2, 42, bounds.size.h - 4);
     graphics_draw_text(ctx, points_text,
-                      MENU_ROW_FONT,
+                      DRIVER_STANDINGS_WINDOW_ROW_FONT,
                       points_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentRight,

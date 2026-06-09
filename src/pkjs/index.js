@@ -257,8 +257,8 @@ function abbreviateEvent(label) {
     if (/Free Practice 3|Practice 3/.test(label)) return 'FP3';
     if (/Sprint Qualifying|Sprint Shootout/.test(label)) return 'SQ';
     if (/Sprint/.test(label)) return 'SR';
-    if (/Qualifying/.test(label)) return 'Q';
-    if (/Race/.test(label)) return 'R';
+    if (/Qualifying/.test(label)) return 'Quali';
+    if (/Race/.test(label)) return 'Race';
     return label.substring(0, 3);
 }
 
