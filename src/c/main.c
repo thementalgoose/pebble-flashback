@@ -17,6 +17,9 @@ static void init(void) {
   // Initialize message handler
   message_handler_init();
 
+  // Prefetch dashboard overview as early as possible
+  message_handler_request_overview();
+
   // Push dashboard window
   dashboard_window_push();
 }

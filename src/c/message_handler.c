@@ -12,6 +12,9 @@ static TeamStandingsDataCallback s_team_standings_data_callback = NULL;
 static TeamStandingsCompleteCallback s_team_standings_complete_callback = NULL;
 static OverviewMessageCallback s_overview_message_callback = NULL;
 
+static char s_cached_overview_text[128] = "";
+static bool s_cached_overview_present = false;
+
 // Message received handler
 static void inbox_received_callback(DictionaryIterator *iterator,
                                     void *context) {
@@ -21,8 +24,15 @@ static void inbox_received_callback(DictionaryIterator *iterator,
     APP_LOG(APP_LOG_LEVEL_INFO, "Received overview message (%d chars)",
             (int)strlen(overview_text));
 
+    // Cache the dashboard overview text so callbacks registered later can still
+    // receive the data if the overview request was sent before the window loaded.
+    strncpy(s_cached_overview_text, overview_text,
+            sizeof(s_cached_overview_text) - 1);
+    s_cached_overview_text[sizeof(s_cached_overview_text) - 1] = '\0';
+    s_cached_overview_present = true;
+
     if (s_overview_message_callback) {
-      s_overview_message_callback(overview_text);
+      s_overview_message_callback(s_cached_overview_text);
     }
     return;
   }
@@ -348,4 +358,8 @@ void message_handler_set_team_standings_callbacks(
 void message_handler_set_overview_message_callback(
     OverviewMessageCallback overview_cb) {
   s_overview_message_callback = overview_cb;
+
+  if (s_overview_message_callback && s_cached_overview_present) {
+    s_overview_message_callback(s_cached_overview_text);
+  }
 }
