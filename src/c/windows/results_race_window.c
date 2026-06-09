@@ -174,7 +174,8 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     char abbreviated_name[16];
     format_driver_name(result->name, abbreviated_name, sizeof(abbreviated_name));
     const int name_x = H_INSET + MENU_ROW_POS_WIDTH + MENU_ROW_POS_GAP;
-    GRect text_rect = GRect(name_x, 2, bounds.size.w - name_x - 46, bounds.size.h - 4);
+    const int secondary_width = 42;
+    GRect text_rect = GRect(name_x, 2, bounds.size.w - name_x - secondary_width - H_INSET, bounds.size.h - 4);
     graphics_draw_text(ctx, abbreviated_name,
                       MENU_ROW_FONT,
                       text_rect,
@@ -184,9 +185,9 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 
     char points_text[16];
     snprintf(points_text, sizeof(points_text), "%d", result->points);
-    GRect points_rect = GRect(bounds.size.w - 44 - H_INSET, 2, 42, bounds.size.h - 4);
+    GRect points_rect = GRect(bounds.size.w - secondary_width - H_INSET, 2, secondary_width, bounds.size.h - 4);
     graphics_draw_text(ctx, points_text,
-                      MENU_ROW_FONT,
+                      MENU_ROW_SECONDARY_FONT,
                       points_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentRight,

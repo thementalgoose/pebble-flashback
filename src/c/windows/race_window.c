@@ -1,5 +1,6 @@
 #include "race_window.h"
 #include "results_race_window.h"
+#include "results_qualifying_window.h"
 #include "flashback_screen.h"
 #include "../data_models.h"
 #include "../message_handler.h"
@@ -197,8 +198,14 @@ static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
   }
 
   const char *label = s_events[cell_index->row].label;
-  if (label && strcmp(label, "R") == 0) {
+  if (!label) {
+    return;
+  }
+
+  if (strcmp(label, "R") == 0) {
     results_window_push(s_current_race_index);
+  } else if (strcmp(label, "Q") == 0) {
+    results_qualifying_window_push(s_current_race_index);
   }
 }
 
