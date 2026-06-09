@@ -12,6 +12,9 @@ static TeamStandingsDataCallback s_team_standings_data_callback = NULL;
 static TeamStandingsCompleteCallback s_team_standings_complete_callback = NULL;
 static OverviewMessageCallback s_overview_message_callback = NULL;
 
+static char s_cached_overview_text[128] = "";
+static bool s_cached_overview_present = false;
+
 // Message received handler
 static void inbox_received_callback(DictionaryIterator *iterator,
                                     void *context) {
@@ -21,8 +24,15 @@ static void inbox_received_callback(DictionaryIterator *iterator,
     APP_LOG(APP_LOG_LEVEL_INFO, "Received overview message (%d chars)",
             (int)strlen(overview_text));
 
+    // Cache the dashboard overview text so callbacks registered later can still
+    // receive the data if the overview request was sent before the window loaded.
+    strncpy(s_cached_overview_text, overview_text,
+            sizeof(s_cached_overview_text) - 1);
+    s_cached_overview_text[sizeof(s_cached_overview_text) - 1] = '\0';
+    s_cached_overview_present = true;
+
     if (s_overview_message_callback) {
-      s_overview_message_callback(overview_text);
+      s_overview_message_callback(s_cached_overview_text);
     }
     return;
   }
@@ -286,6 +296,52 @@ void message_handler_request_team_standings(void) {
   }
 }
 
+void message_handler_request_race_results(int race_round) {
+  DictionaryIterator *iter;
+  AppMessageResult result = app_message_outbox_begin(&iter);
+
+  if (result == APP_MSG_OK) {
+    dict_write_uint8(iter, MESSAGE_KEY_REQUEST_TYPE,
+                     REQUEST_TYPE_GET_RACE_RESULTS);
+    dict_write_int32(iter, MESSAGE_KEY_DATA_INDEX, race_round);
+    result = app_message_outbox_send();
+
+    if (result == APP_MSG_OK) {
+      APP_LOG(APP_LOG_LEVEL_INFO, "Requested race results for round %d",
+              race_round);
+    } else {
+      APP_LOG(APP_LOG_LEVEL_ERROR,
+              "Failed to send race results request: %d", (int)result);
+    }
+  } else {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Failed to begin race results request: %d",
+            (int)result);
+  }
+}
+
+void message_handler_request_qualifying_results(int race_round) {
+  DictionaryIterator *iter;
+  AppMessageResult result = app_message_outbox_begin(&iter);
+
+  if (result == APP_MSG_OK) {
+    dict_write_uint8(iter, MESSAGE_KEY_REQUEST_TYPE,
+                     REQUEST_TYPE_GET_QUALIFYING_RESULTS);
+    dict_write_int32(iter, MESSAGE_KEY_DATA_INDEX, race_round);
+    result = app_message_outbox_send();
+
+    if (result == APP_MSG_OK) {
+      APP_LOG(APP_LOG_LEVEL_INFO, "Requested qualifying results for round %d",
+              race_round);
+    } else {
+      APP_LOG(APP_LOG_LEVEL_ERROR,
+              "Failed to send qualifying results request: %d", (int)result);
+    }
+  } else {
+    APP_LOG(APP_LOG_LEVEL_ERROR,
+            "Failed to begin qualifying results request: %d", (int)result);
+  }
+}
+
 void message_handler_set_driver_standings_callbacks(
     DriverStandingsDataCallback data_cb,
     DriverStandingsCompleteCallback complete_cb) {
@@ -302,4 +358,8 @@ void message_handler_set_team_standings_callbacks(
 void message_handler_set_overview_message_callback(
     OverviewMessageCallback overview_cb) {
   s_overview_message_callback = overview_cb;
+
+  if (s_overview_message_callback && s_cached_overview_present) {
+    s_overview_message_callback(s_cached_overview_text);
+  }
 }

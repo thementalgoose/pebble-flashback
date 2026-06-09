@@ -21,7 +21,9 @@ const REQUEST_TYPES = {
     GET_OVERVIEW: 1,
     GET_RACE_DETAILS: 2,
     GET_DRIVER_STANDINGS: 3,
-    GET_TEAM_STANDINGS: 4
+    GET_TEAM_STANDINGS: 4,
+    GET_RACE_RESULTS: 5,
+    GET_QUALIFYING_RESULTS: 6
 };
 
 // Cache management
@@ -255,8 +257,8 @@ function abbreviateEvent(label) {
     if (/Free Practice 3|Practice 3/.test(label)) return 'FP3';
     if (/Sprint Qualifying|Sprint Shootout/.test(label)) return 'SQ';
     if (/Sprint/.test(label)) return 'SR';
-    if (/Qualifying/.test(label)) return 'Q';
-    if (/Race/.test(label)) return 'R';
+    if (/Qualifying/.test(label)) return 'Quali';
+    if (/Race/.test(label)) return 'Race';
     return label.substring(0, 3);
 }
 
@@ -406,6 +408,141 @@ function sendTeamStandingsToWatch(standingsData) {
     });
 }
 
+function fetchRaceResults(season, raceRound) {
+    return new Promise((resolve, reject) => {
+        const cacheIdentifier = `race_results_${raceRound}`;
+        const cached = getCachedData(cacheIdentifier, season);
+        if (cached) {
+            resolve(cached);
+            return;
+        }
+
+        const url = `${BASE_URL}/races/${season}/${raceRound}.json`;
+        console.log(`Fetching race results from ${url}`);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    console.log('Race results data received');
+                    setCachedData(cacheIdentifier, season, data);
+                    resolve(data);
+                } catch (e) {
+                    console.error('Error parsing race results JSON:', e);
+                    reject(e);
+                }
+            } else {
+                console.error('HTTP error fetching race results:', xhr.status);
+                reject(new Error('HTTP ' + xhr.status));
+            }
+        };
+        xhr.onerror = function() {
+            console.error('Network error');
+            reject(new Error('Network error'));
+        };
+        xhr.send();
+    });
+}
+
+function sendRaceResultsToWatch(resultsData, raceRound) {
+    if (!resultsData || !resultsData.data || !resultsData.data.race) {
+        console.log('No race results data available for round', raceRound);
+
+        Pebble.sendAppMessage({
+            REQUEST_TYPE: REQUEST_TYPES.GET_RACE_RESULTS,
+            DATA_TITLE: ''
+        }, function () {
+            console.log('Sent empty race results message');
+        }, function (e) {
+            console.error('Failed to send race results message:', e);
+            console.error('Error details:', JSON.stringify(e));
+        });
+        return;
+    }
+
+    const raceResults = resultsData.data.race;
+    const drivers = resultsData.data.drivers || {};
+
+    const resultsArray = Object.keys(raceResults).map((driverId) => {
+        const result = raceResults[driverId];
+        const driver = drivers[driverId] || {};
+        const fullName = driver.firstName && driver.lastName ? `${driver.firstName} ${driver.lastName}` : driverId;
+        return {
+            position: result.finished || result.gridPos || 0,
+            name: fullName,
+            points: result.points || 0
+        };
+    }).filter(item => item.position > 0)
+      .sort((a, b) => a.position - b.position);
+
+    const lines = resultsArray.map((item) => `${item.position}|${item.name}|${item.points}`);
+    const formattedText = lines.join('\n');
+
+    console.log('Sending race results as single message');
+    console.log('Race results text length:', formattedText.length);
+
+    Pebble.sendAppMessage({
+        REQUEST_TYPE: REQUEST_TYPES.GET_RACE_RESULTS,
+        DATA_TITLE: formattedText
+    }, function () {
+        console.log('Sent race results successfully');
+    }, function (e) {
+        console.error('Failed to send race results:', e);
+        console.error('Error details:', JSON.stringify(e));
+    });
+}
+
+function sendQualifyingResultsToWatch(resultsData, raceRound) {
+    if (!resultsData || !resultsData.data || !resultsData.data.qualifying) {
+        console.log('No qualifying data available for round', raceRound);
+
+        Pebble.sendAppMessage({
+            REQUEST_TYPE: REQUEST_TYPES.GET_QUALIFYING_RESULTS,
+            DATA_QUALIFYING: ''
+        }, function () {
+            console.log('Sent empty qualifying results message');
+        }, function (e) {
+            console.error('Failed to send qualifying results message:', e);
+            console.error('Error details:', JSON.stringify(e));
+        });
+        return;
+    }
+
+    const qualifyingResults = resultsData.data.qualifying;
+    const drivers = resultsData.data.drivers || {};
+
+    const resultsArray = Object.keys(qualifyingResults).map((driverId) => {
+        const result = qualifyingResults[driverId];
+        const driver = drivers[driverId] || {};
+        const fullName = driver.firstName && driver.lastName ? `${driver.firstName} ${driver.lastName}` : driverId;
+        const bestTime = result.q3 || result.q2 || result.q1 || '';
+        return {
+            position: result.qualified || 0,
+            name: fullName,
+            time: bestTime
+        };
+    }).filter(item => item.position > 0)
+      .sort((a, b) => a.position - b.position);
+
+    const lines = resultsArray.map((item) => `${item.position}|${item.name}|${item.time}`);
+    const formattedText = lines.join('\n');
+
+    console.log('Sending qualifying results as single message');
+    console.log('Qualifying results text length:', formattedText.length);
+
+    Pebble.sendAppMessage({
+        REQUEST_TYPE: REQUEST_TYPES.GET_QUALIFYING_RESULTS,
+        DATA_QUALIFYING: formattedText
+    }, function () {
+        console.log('Sent qualifying results successfully');
+    }, function (e) {
+        console.error('Failed to send qualifying results:', e);
+        console.error('Error details:', JSON.stringify(e));
+    });
+}
+
 // Push a single timeline pin to the Rebble timeline API
 function pushPin(token, pin) {
     return new Promise((resolve, reject) => {
@@ -532,7 +669,7 @@ Pebble.addEventListener('appmessage', function (e) {
                 .catch(error => console.error('Failed to get overview:', error));
             break;
 
-        case REQUEST_TYPES.GET_RACE_DETAILS:
+        case REQUEST_TYPES.GET_RACE_DETAILS: {
             console.log('Request: GET_RACE_DETAILS');
             const raceRound = payload.DATA_INDEX;
             console.log('Race round:', raceRound);
@@ -540,6 +677,7 @@ Pebble.addEventListener('appmessage', function (e) {
                 .then(data => sendRaceDetailsToWatch(data, raceRound))
                 .catch(error => console.error('Failed to get race details:', error));
             break;
+        }
 
         case REQUEST_TYPES.GET_DRIVER_STANDINGS:
             console.log('Request: GET_DRIVER_STANDINGS');
@@ -554,6 +692,39 @@ Pebble.addEventListener('appmessage', function (e) {
                 .then(data => sendTeamStandingsToWatch(data))
                 .catch(error => console.error('Failed to get team standings:', error));
             break;
+
+        case REQUEST_TYPES.GET_RACE_RESULTS: {
+            console.log('Request: GET_RACE_RESULTS');
+            const raceRound = payload.DATA_INDEX;
+            console.log('Race round:', raceRound);
+            fetchRaceResults(season, raceRound)
+                .then(data => sendRaceResultsToWatch(data, raceRound))
+                .catch(error => {
+                    console.error('Failed to get race results:', error);
+                    // Send empty results to allow app to show the no-results page
+                    Pebble.sendAppMessage({
+                        REQUEST_TYPE: REQUEST_TYPES.GET_RACE_RESULTS,
+                        DATA_TITLE: ''
+                    });
+                });
+            break;
+        }
+
+        case REQUEST_TYPES.GET_QUALIFYING_RESULTS: {
+            console.log('Request: GET_QUALIFYING_RESULTS');
+            const raceRound = payload.DATA_INDEX;
+            console.log('Race round:', raceRound);
+            fetchRaceResults(season, raceRound)
+                .then(data => sendQualifyingResultsToWatch(data, raceRound))
+                .catch(error => {
+                    console.error('Failed to get qualifying results:', error);
+                    Pebble.sendAppMessage({
+                        REQUEST_TYPE: REQUEST_TYPES.GET_QUALIFYING_RESULTS,
+                        DATA_QUALIFYING: ''
+                    });
+                });
+            break;
+        }
 
         default:
             console.log('Unknown request type:', requestType);

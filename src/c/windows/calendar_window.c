@@ -317,7 +317,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     snprintf(round_text, sizeof(round_text), "%d", race->round);
     GRect round_rect = GRect(H_INSET, 2, MENU_ROW_POS_WIDTH, bounds.size.h - 4);
     graphics_draw_text(ctx, round_text,
-                      MENU_ROW_FONT,
+                      CALENDAR_WINDOW_ROW_FONT,
                       round_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
@@ -327,7 +327,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     const int name_x = H_INSET + MENU_ROW_POS_WIDTH + MENU_ROW_POS_GAP;
     GRect name_rect = GRect(name_x, 2, bounds.size.w - name_x - H_INSET, bounds.size.h - 4);
     graphics_draw_text(ctx, race->name,
-                      MENU_ROW_FONT,
+                      CALENDAR_WINDOW_ROW_FONT,
                       name_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,

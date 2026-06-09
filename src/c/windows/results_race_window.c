@@ -1,4 +1,4 @@
-#include "team_standings_window.h"
+#include "results_race_window.h"
 #include "flashback_screen.h"
 #include "../data_models.h"
 #include "../message_handler.h"
@@ -6,138 +6,139 @@
 #include "../ui_constants.h"
 #include <pebble.h>
 
-#define MAX_TEAMS 15
+#define MAX_RESULTS 30
 
 static Window *s_window;
 static MenuLayer *s_menu_layer;
 static char s_subtitle_text[32];
+static char s_race_name[32] = "R1 Race";
 
-// Team standings data storage
-static ConstructorStanding s_teams[MAX_TEAMS];
-static int s_team_count = 0;
+// Race results data storage
+static DriverStanding s_results[MAX_RESULTS];
+static int s_result_count = 0;
 static bool s_data_loaded = false;
+static int s_current_race_round = 1;
 
-// Parse pipe-delimited team standings data
-static void parse_standings_data(const char *data) {
+// Helper to format driver name as "M.Verstapp." like driver standings
+static void format_driver_name(const char *full_name, char *output, size_t output_size) {
+  if (!full_name || !output || output_size < 4) return;
+
+  const char *space = strchr(full_name, ' ');
+  if (!space) {
+    strncpy(output, full_name, output_size - 1);
+    output[output_size - 1] = '\0';
+    return;
+  }
+
+  char first_initial = full_name[0];
+  const char *last_name = space + 1;
+  size_t max_last_len = output_size - 4;
+  size_t pos = 0;
+  output[pos++] = first_initial;
+  output[pos++] = '.';
+
+  size_t copied = 0;
+  while (*last_name && copied < max_last_len && pos < output_size - 2) {
+    output[pos++] = *last_name++;
+    copied++;
+  }
+
+  output[pos] = '\0';
+}
+
+// Parse pipe-delimited results data
+static void parse_results_data(const char *data) {
   if (!data) {
     return;
   }
 
-  // Reset team count
-  s_team_count = 0;
+  s_result_count = 0;
 
   const char *ptr = data;
-  char line_buffer[128];
+  char line_buffer[256];
 
-  // Parse each line manually
-  while (*ptr && s_team_count < MAX_TEAMS) {
-    // Extract one line
+  while (*ptr && s_result_count < MAX_RESULTS) {
     size_t line_len = 0;
     while (*ptr && *ptr != '\n' && line_len < sizeof(line_buffer) - 1) {
       line_buffer[line_len++] = *ptr++;
     }
     line_buffer[line_len] = '\0';
 
-    // Skip the newline
     if (*ptr == '\n') {
       ptr++;
     }
 
-    // Skip empty lines
     if (line_len == 0) {
       continue;
     }
 
-    // Parse pipe-delimited fields: position|name|points
     char position_str[16] = {0};
     char name[64] = {0};
     char points_str[16] = {0};
 
-    // Find first pipe (position|name)
     const char *pipe1 = strchr(line_buffer, '|');
     if (!pipe1) continue;
-
-    // Find second pipe (name|points)
     const char *pipe2 = strchr(pipe1 + 1, '|');
     if (!pipe2) continue;
 
-    // Extract position
     size_t pos_len = pipe1 - line_buffer;
     if (pos_len >= sizeof(position_str)) pos_len = sizeof(position_str) - 1;
     strncpy(position_str, line_buffer, pos_len);
     position_str[pos_len] = '\0';
 
-    // Extract name
     size_t name_len = pipe2 - pipe1 - 1;
     if (name_len >= sizeof(name)) name_len = sizeof(name) - 1;
     strncpy(name, pipe1 + 1, name_len);
     name[name_len] = '\0';
 
-    // Extract points (rest of the line)
     strncpy(points_str, pipe2 + 1, sizeof(points_str) - 1);
     points_str[sizeof(points_str) - 1] = '\0';
 
-    // Store the data
-    s_teams[s_team_count].position = atoi(position_str);
-    s_teams[s_team_count].points = atoi(points_str);
-    snprintf(s_teams[s_team_count].name, sizeof(s_teams[s_team_count].name), "%s", name);
-    s_teams[s_team_count].index = s_team_count;
+    s_results[s_result_count].position = atoi(position_str);
+    s_results[s_result_count].points = atoi(points_str);
+    snprintf(s_results[s_result_count].name, sizeof(s_results[s_result_count].name), "%s", name);
+    s_results[s_result_count].index = s_result_count;
 
-    s_team_count++;
+    s_result_count++;
   }
 
-  APP_LOG(APP_LOG_LEVEL_INFO, "Parsed %d teams from standings data", s_team_count);
+  APP_LOG(APP_LOG_LEVEL_INFO, "Parsed %d race results", s_result_count);
   s_data_loaded = true;
 }
 
-// Callback from message handler
-static void on_team_standings_received(int index, const char *name, int points,
-                                       int position) {
-  // Legacy callback - not used with new format
-}
-
-static void on_team_standings_complete(int count) {
-  // Legacy callback - not used with new format
-}
-
-// Custom inbox handler for team standings text
-static void team_standings_inbox_received(DictionaryIterator *iterator, void *context) {
+static void results_inbox_received(DictionaryIterator *iterator, void *context) {
   Tuple *request_type_tuple = dict_find(iterator, MESSAGE_KEY_REQUEST_TYPE);
   if (!request_type_tuple) {
     return;
   }
 
   int request_type = request_type_tuple->value->int32;
-  if (request_type != REQUEST_TYPE_GET_TEAM_STANDINGS) {
+  if (request_type != REQUEST_TYPE_GET_RACE_RESULTS) {
     return;
   }
 
-  // Get the formatted standings text
   Tuple *title_tuple = dict_find(iterator, MESSAGE_KEY_DATA_TITLE);
   if (!title_tuple) {
-    APP_LOG(APP_LOG_LEVEL_ERROR, "No title in team standings message");
+    APP_LOG(APP_LOG_LEVEL_ERROR, "No title in race results message");
     return;
   }
 
-  const char *standings_text = title_tuple->value->cstring;
-  APP_LOG(APP_LOG_LEVEL_INFO, "Received team standings text (%d chars)", strlen(standings_text));
+  const char *results_text = title_tuple->value->cstring;
+  APP_LOG(APP_LOG_LEVEL_INFO, "Received race results text (%d chars)", (int)strlen(results_text));
 
-  // Parse the pipe-delimited data
-  parse_standings_data(standings_text);
+  parse_results_data(results_text);
 
-  // Reload the menu
   if (s_menu_layer) {
     menu_layer_reload_data(s_menu_layer);
   }
 }
 
-// Menu layer callbacks
 static uint16_t get_num_rows_callback(MenuLayer *menu_layer,
                                       uint16_t section_index, void *context) {
   if (!s_data_loaded) {
-    return 1; // Show loading
+    return 1;
   }
-  return s_team_count > 0 ? s_team_count : 1;
+  return s_result_count > 0 ? s_result_count : 1;
 }
 
 static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
@@ -147,11 +148,9 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     return;
   }
 
-  if (cell_index->row < s_team_count) {
-    ConstructorStanding *team = &s_teams[cell_index->row];
-
+  if (cell_index->row < s_result_count) {
+    DriverStanding *result = &s_results[cell_index->row];
     GRect bounds = layer_get_bounds(cell_layer);
-
     bool selected = menu_layer_is_index_selected(s_menu_layer, cell_index);
 
     if (selected) {
@@ -162,47 +161,47 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     GColor text_color = selected ? TEXT_COLOR_SELECTED : TEXT_COLOR_UNSELECTED;
     graphics_context_set_text_color(ctx, text_color);
 
-    // Draw position number in a fixed-width column (right-aligned so digits line up)
     char position_text[4];
-    snprintf(position_text, sizeof(position_text), "%d", team->position);
+    snprintf(position_text, sizeof(position_text), "%d", result->position);
     GRect pos_rect = GRect(H_INSET, 2, MENU_ROW_POS_WIDTH, bounds.size.h - 4);
     graphics_draw_text(ctx, position_text,
-                      TEAM_STANDINGS_WINDOW_ROW_FONT,
+                      RESULTS_RACE_WINDOW_ROW_FONT,
                       pos_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
                       NULL);
 
-    // Draw name starting at a fixed offset after the position column
+    char abbreviated_name[16];
+    format_driver_name(result->name, abbreviated_name, sizeof(abbreviated_name));
     const int name_x = H_INSET + MENU_ROW_POS_WIDTH + MENU_ROW_POS_GAP;
-    GRect text_rect = GRect(name_x, 2, bounds.size.w - name_x - 46, bounds.size.h - 4);
-    graphics_draw_text(ctx, team->name,
-                      TEAM_STANDINGS_WINDOW_ROW_FONT,
+    const int secondary_width = 42;
+    GRect text_rect = GRect(name_x, 2, bounds.size.w - name_x - secondary_width - H_INSET, bounds.size.h - 4);
+    graphics_draw_text(ctx, abbreviated_name,
+                      RESULTS_RACE_WINDOW_ROW_FONT,
                       text_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
                       NULL);
 
     char points_text[16];
-    snprintf(points_text, sizeof(points_text), "%d", team->points);
-    GRect points_rect = GRect(bounds.size.w - 44 - H_INSET, 2, 42, bounds.size.h - 4);
+    snprintf(points_text, sizeof(points_text), "%d", result->points);
+    GRect points_rect = GRect(bounds.size.w - secondary_width - H_INSET, 4, secondary_width, bounds.size.h - 4);
     graphics_draw_text(ctx, points_text,
-                      TEAM_STANDINGS_WINDOW_ROW_FONT,
+                      RESULTS_RACE_WINDOW_SECONDARY_FONT,
                       points_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentRight,
                       NULL);
   } else {
-    menu_cell_basic_draw(ctx, cell_layer, "No teams", NULL, NULL);
+    menu_cell_basic_draw(ctx, cell_layer, "No results", NULL, NULL);
   }
 }
 
 static void draw_header_callback(GContext *ctx, const Layer *cell_layer,
                                  uint16_t section_index, void *context) {
-  flashback_screen_draw_header(ctx, cell_layer, "Teams", s_subtitle_text);
+  flashback_screen_draw_header(ctx, cell_layer, s_race_name, s_subtitle_text);
 }
 
-// Window lifecycle
 static void window_load(Window *window) {
   s_menu_layer = flashback_screen_create_menu_layer(window);
 
@@ -216,13 +215,12 @@ static void window_load(Window *window) {
                                .get_cell_height = flashback_screen_cell_height_callback,
                            });
 
+  app_message_register_inbox_received(results_inbox_received);
+
   snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d", g_current_season);
 
   if (!s_data_loaded) {
-    message_handler_set_team_standings_callbacks(on_team_standings_received,
-                                                 on_team_standings_complete);
-    app_message_register_inbox_received(team_standings_inbox_received);
-    message_handler_request_team_standings();
+    message_handler_request_race_results(s_current_race_round);
   }
 }
 
@@ -232,7 +230,22 @@ static void window_unload(Window *window) {
   flashback_screen_destroy_header_background();
 }
 
-void team_standings_window_push(void) {
+void results_window_push(int race_round) {
+  bool is_different_round = (race_round != s_current_race_round);
+  s_current_race_round = race_round;
+  snprintf(s_race_name, sizeof(s_race_name), "R%d Race", s_current_race_round);
+  snprintf(s_subtitle_text, sizeof(s_subtitle_text), "%d R%d", g_current_season, s_current_race_round);
+
+  if (is_different_round) {
+    s_data_loaded = false;
+    s_result_count = 0;
+    memset(s_results, 0, sizeof(s_results));
+
+    if (s_menu_layer) {
+      menu_layer_reload_data(s_menu_layer);
+    }
+  }
+
   if (!s_window) {
     s_window = window_create();
     window_set_window_handlers(s_window, (WindowHandlers){
@@ -244,13 +257,13 @@ void team_standings_window_push(void) {
   window_stack_push(s_window, true);
 }
 
-void team_standings_window_destroy(void) {
+void results_window_destroy(void) {
   if (s_window) {
     window_destroy(s_window);
     s_window = NULL;
   }
 
-  // Clear data
   s_data_loaded = false;
-  s_team_count = 0;
+  s_result_count = 0;
+  s_current_race_round = 1;
 }

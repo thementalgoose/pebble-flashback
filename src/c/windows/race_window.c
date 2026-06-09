@@ -1,4 +1,6 @@
 #include "race_window.h"
+#include "results_race_window.h"
+#include "results_qualifying_window.h"
 #include "flashback_screen.h"
 #include "../data_models.h"
 #include "../message_handler.h"
@@ -9,7 +11,7 @@
 
 #define MAX_EVENTS 10
 // Width of the fixed event-code column (fits up to 3 chars e.g. "FP1")
-#define EVENT_CODE_WIDTH 28
+#define EVENT_CODE_WIDTH 40
 
 static Window *s_window;
 static MenuLayer *s_menu_layer;
@@ -140,6 +142,11 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     return;
   }
 
+  if (s_event_count == 0) {
+    menu_cell_basic_draw(ctx, cell_layer, "No events", NULL, NULL);
+    return;
+  }
+
   if (cell_index->row < s_event_count) {
     RaceEvent *event = &s_events[cell_index->row];
     GRect bounds = layer_get_bounds(cell_layer);
@@ -156,7 +163,7 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
     // Event shorthand code in fixed-width left column
     GRect code_rect = GRect(H_INSET, 2, EVENT_CODE_WIDTH, bounds.size.h - 4);
     graphics_draw_text(ctx, event->label,
-                      MENU_ROW_FONT,
+                      RACE_WINDOW_ROW_FONT,
                       code_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
@@ -174,13 +181,31 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
 #endif
     GRect time_rect = GRect(bounds.size.w - time_width - H_INSET, 2, time_width, bounds.size.h - 4);
     graphics_draw_text(ctx, compact_time,
-                      MENU_ROW_FONT,
+                      RACE_WINDOW_ROW_FONT,
                       time_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentRight,
                       NULL);
   } else {
     menu_cell_basic_draw(ctx, cell_layer, "No events", NULL, NULL);
+  }
+}
+
+static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
+                            void *context) {
+  if (!s_data_loaded || cell_index->row >= s_event_count) {
+    return;
+  }
+
+  const char *label = s_events[cell_index->row].label;
+  if (!label) {
+    return;
+  }
+
+  if (strcmp(label, "Race") == 0) {
+    results_window_push(s_current_race_index);
+  } else if (strcmp(label, "Quali") == 0) {
+    results_qualifying_window_push(s_current_race_index);
   }
 }
 
@@ -198,6 +223,7 @@ static void window_load(Window *window) {
                                .get_num_sections = flashback_screen_num_sections_callback,
                                .get_num_rows = get_num_rows_callback,
                                .draw_row = draw_row_callback,
+                               .select_click = select_callback,
                                .get_cell_height = flashback_screen_cell_height_callback,
                                .draw_header = draw_header_callback,
                                .get_header_height = flashback_screen_header_height_callback,

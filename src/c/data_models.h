@@ -32,6 +32,13 @@ typedef struct {
 
 typedef struct {
   char name[MAX_TITLE_LENGTH];
+  char time[MAX_SUBTITLE_LENGTH];
+  int position;
+  int index;
+} QualifyingResult;
+
+typedef struct {
+  char name[MAX_TITLE_LENGTH];
   int points;
   int position;
   int index;

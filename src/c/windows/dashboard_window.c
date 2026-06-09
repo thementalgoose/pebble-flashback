@@ -132,7 +132,7 @@ static void draw_loading_dot(GContext *ctx, int x, int y, bool active) {
   GRect dot_rect = GRect(x - dot_width / 2, y - dot_height / 2 - (active ? 2 : 0),
                          dot_width, dot_height);
   graphics_draw_text(ctx, dot,
-                     MENU_HEADER_SUBTITLE_FONT,
+                     DASHBOARD_HEADER_SUBTITLE_FONT,
                      dot_rect,
                      GTextOverflowModeWordWrap,
                      GTextAlignmentCenter,
@@ -196,7 +196,7 @@ static void draw_overview_row(GContext *ctx, const Layer *cell_layer,
 
   GRect round_rect = GRect(H_INSET, 4, bounds.size.w - 2 * H_INSET, 16);
   graphics_draw_text(ctx, round_text,
-                     MENU_HEADER_SUBTITLE_FONT,
+                     DASHBOARD_HEADER_SUBTITLE_FONT,
                      round_rect,
                      GTextOverflowModeTrailingEllipsis,
                      GTextAlignmentLeft,
@@ -204,7 +204,7 @@ static void draw_overview_row(GContext *ctx, const Layer *cell_layer,
 
   GRect name_rect = GRect(H_INSET, 20, bounds.size.w - 2 * H_INSET, 24);
   graphics_draw_text(ctx, s_race_name,
-                     MENU_ROW_FONT,
+                     DASHBOARD_ROW_FONT,
                      name_rect,
                      GTextOverflowModeTrailingEllipsis,
                      GTextAlignmentLeft,
@@ -212,7 +212,7 @@ static void draw_overview_row(GContext *ctx, const Layer *cell_layer,
 
   GRect datetime_rect = GRect(H_INSET, 44, bounds.size.w - 2 * H_INSET, 18);
   graphics_draw_text(ctx, datetime_text,
-                     MENU_HEADER_SUBTITLE_FONT,
+                     DASHBOARD_HEADER_SUBTITLE_FONT,
                      datetime_rect,
                      GTextOverflowModeTrailingEllipsis,
                      GTextAlignmentLeft,
@@ -271,7 +271,7 @@ static void draw_regular_row(GContext *ctx, const Layer *cell_layer,
 
   GRect text_rect = GRect(text_x, 2, bounds.size.w - text_x - H_INSET, bounds.size.h - 4);
   graphics_draw_text(ctx, title,
-                     MENU_ROW_FONT,
+                     DASHBOARD_ROW_FONT,
                      text_rect,
                      GTextOverflowModeTrailingEllipsis,
                      GTextAlignmentLeft,

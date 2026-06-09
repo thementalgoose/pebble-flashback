@@ -81,9 +81,9 @@ void flashback_screen_draw_header(GContext *ctx, const Layer *cell_layer,
 
   const int title_x = HDR_INSET + MENU_HEADER_LOGO_SIZE + MENU_HEADER_LOGO_GAP;
   const int title_width = bounds.size.w - title_x - HDR_INSET - MENU_HEADER_RIGHT_WIDTH;
-  GRect title_rect = GRect(title_x, MENU_HEADER_TITLE_Y, title_width > 0 ? title_width : 0, 20);
+  GRect title_rect = GRect(title_x, MENU_HEADER_TITLE_Y, title_width > 0 ? title_width : 0, MENU_HEADER_TITLE_HEIGHT);
   graphics_draw_text(ctx, APP_TITLE,
-                    MENU_HEADER_TITLE_FONT,
+                    FLASHBACK_SCREEN_HEADER_TITLE_FONT,
                     title_rect,
                     GTextOverflowModeTrailingEllipsis,
                     GTextAlignmentLeft,
@@ -92,9 +92,9 @@ void flashback_screen_draw_header(GContext *ctx, const Layer *cell_layer,
   if (subtitle_right) {
     GRect right_rect = GRect(bounds.size.w - HDR_INSET - MENU_HEADER_RIGHT_WIDTH,
                              MENU_HEADER_TITLE_Y,
-                             MENU_HEADER_RIGHT_WIDTH, 20);
+                             MENU_HEADER_RIGHT_WIDTH, MENU_HEADER_TITLE_HEIGHT);
     graphics_draw_text(ctx, subtitle_right,
-                      MENU_HEADER_TITLE_FONT,
+                      FLASHBACK_SCREEN_HEADER_TITLE_FONT,
                       right_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentRight,
@@ -103,18 +103,18 @@ void flashback_screen_draw_header(GContext *ctx, const Layer *cell_layer,
 
   if (subtitle_right) {
     GRect left_rect = GRect(HDR_INSET, MENU_HEADER_SUBTITLE_Y,
-                            bounds.size.w - 2 * HDR_INSET, 24);
+                            bounds.size.w - 2 * HDR_INSET, MENU_HEADER_SUBTITLE_HEIGHT);
     graphics_draw_text(ctx, subtitle_left,
-                      MENU_ROW_FONT,
+                      FLASHBACK_SCREEN_HEADER_SUBTITLE_FONT,
                       left_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
                       NULL);
   } else {
     GRect full_rect = GRect(HDR_INSET, MENU_HEADER_SUBTITLE_Y,
-                            bounds.size.w - 2 * HDR_INSET, 24);
+                            bounds.size.w - 2 * HDR_INSET, MENU_HEADER_SUBTITLE_HEIGHT);
     graphics_draw_text(ctx, subtitle_left,
-                      MENU_ROW_FONT,
+                      FLASHBACK_SCREEN_HEADER_SUBTITLE_FONT,
                       full_rect,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentLeft,
