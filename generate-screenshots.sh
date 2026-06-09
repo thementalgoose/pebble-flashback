@@ -1,4 +1,4 @@
-whereis pebble
+pebble wipe
 python screenshot.py --emulator basalt --steps screenshot-steps.json --folder appstore/basalt 
 python screenshot.py --emulator chalk --steps screenshot-steps.json --folder appstore/chalk --no-build
 python screenshot.py --emulator diorite --steps screenshot-steps.json --folder appstore/diorite --no-build
