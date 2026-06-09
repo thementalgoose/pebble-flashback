@@ -286,6 +286,29 @@ void message_handler_request_team_standings(void) {
   }
 }
 
+void message_handler_request_race_results(int race_round) {
+  DictionaryIterator *iter;
+  AppMessageResult result = app_message_outbox_begin(&iter);
+
+  if (result == APP_MSG_OK) {
+    dict_write_uint8(iter, MESSAGE_KEY_REQUEST_TYPE,
+                     REQUEST_TYPE_GET_RACE_RESULTS);
+    dict_write_int32(iter, MESSAGE_KEY_DATA_INDEX, race_round);
+    result = app_message_outbox_send();
+
+    if (result == APP_MSG_OK) {
+      APP_LOG(APP_LOG_LEVEL_INFO, "Requested race results for round %d",
+              race_round);
+    } else {
+      APP_LOG(APP_LOG_LEVEL_ERROR,
+              "Failed to send race results request: %d", (int)result);
+    }
+  } else {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Failed to begin race results request: %d",
+            (int)result);
+  }
+}
+
 void message_handler_set_driver_standings_callbacks(
     DriverStandingsDataCallback data_cb,
     DriverStandingsCompleteCallback complete_cb) {

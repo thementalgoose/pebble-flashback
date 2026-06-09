@@ -7,7 +7,8 @@ typedef enum {
   REQUEST_TYPE_GET_OVERVIEW = 1,
   REQUEST_TYPE_GET_RACE_DETAILS = 2,
   REQUEST_TYPE_GET_DRIVER_STANDINGS = 3,
-  REQUEST_TYPE_GET_TEAM_STANDINGS = 4
+  REQUEST_TYPE_GET_TEAM_STANDINGS = 4,
+  REQUEST_TYPE_GET_RACE_RESULTS = 5
 } RequestType;
 
 // Callback types for different data
@@ -39,6 +40,7 @@ void message_handler_request_overview(void);
 void message_handler_request_race_details(int race_index);
 void message_handler_request_driver_standings(void);
 void message_handler_request_team_standings(void);
+void message_handler_request_race_results(int race_round);
 
 // Register callbacks
 void message_handler_set_overview_callbacks(

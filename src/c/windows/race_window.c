@@ -1,4 +1,5 @@
 #include "race_window.h"
+#include "results_window.h"
 #include "flashback_screen.h"
 #include "../data_models.h"
 #include "../message_handler.h"
@@ -130,7 +131,7 @@ static uint16_t get_num_rows_callback(MenuLayer *menu_layer,
   if (!s_data_loaded) {
     return 1; // Show loading
   }
-  return s_event_count > 0 ? s_event_count : 1;
+  return s_event_count > 0 ? s_event_count + 1 : 2;
 }
 
 static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
@@ -138,6 +139,17 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
   if (!s_data_loaded) {
     menu_cell_basic_draw(ctx, cell_layer, "Loading...", NULL, NULL);
     return;
+  }
+
+  if (s_event_count == 0) {
+    if (cell_index->row == 0) {
+      menu_cell_basic_draw(ctx, cell_layer, "No events", NULL, NULL);
+      return;
+    }
+    if (cell_index->row == 1) {
+      menu_cell_basic_draw(ctx, cell_layer, "Results", "Show race results", NULL);
+      return;
+    }
   }
 
   if (cell_index->row < s_event_count) {
@@ -179,8 +191,22 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer,
                       GTextOverflowModeTrailingEllipsis,
                       GTextAlignmentRight,
                       NULL);
+  } else if (cell_index->row == s_event_count) {
+    menu_cell_basic_draw(ctx, cell_layer, "Results", "Show race results", NULL);
   } else {
     menu_cell_basic_draw(ctx, cell_layer, "No events", NULL, NULL);
+  }
+}
+
+static void select_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index,
+                            void *context) {
+  if (!s_data_loaded) {
+    return;
+  }
+
+  int results_row = (s_event_count > 0) ? s_event_count : 1;
+  if (cell_index->row == results_row) {
+    results_window_push(s_current_race_index);
   }
 }
 
@@ -198,6 +224,7 @@ static void window_load(Window *window) {
                                .get_num_sections = flashback_screen_num_sections_callback,
                                .get_num_rows = get_num_rows_callback,
                                .draw_row = draw_row_callback,
+                               .select_click = select_callback,
                                .get_cell_height = flashback_screen_cell_height_callback,
                                .draw_header = draw_header_callback,
                                .get_header_height = flashback_screen_header_height_callback,
