@@ -17,6 +17,10 @@ static void init(void) {
   // Initialize message handler
   message_handler_init();
 
+#if defined(PBL_PLATFORM_EMERY)
+  app_touch_navigation_enable(true);
+#endif
+
   // Prefetch dashboard overview as early as possible
   message_handler_request_overview();
 
@@ -30,6 +34,10 @@ static void deinit(void) {
 
   // Cleanup message handler
   message_handler_deinit();
+
+#if defined(PBL_PLATFORM_EMERY)
+  app_touch_navigation_enable(false);
+#endif
 
   APP_LOG(APP_LOG_LEVEL_INFO, "F1 Flashback deinitialized");
 }
