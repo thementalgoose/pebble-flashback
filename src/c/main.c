@@ -17,8 +17,7 @@ static void init(void) {
   // Initialize message handler
   message_handler_init();
 
-#if defined(PBL_PLATFORM_BASALT) || defined(PBL_PLATFORM_CHALK) || \
-    defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
+#if defined(PBL_PLATFORM_EMERY)
   app_touch_navigation_enable(true);
 #endif
 
